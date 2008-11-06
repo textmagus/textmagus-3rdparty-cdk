@@ -1,9 +1,13 @@
-/* $Id: cdklabel.c,v 1.10 2005/12/27 16:06:34 tom Exp $ */
+/* $Id: cdklabel.c,v 1.12 2008/11/04 23:36:39 tom Exp $ */
 
 #include <cdk_test.h>
 
 #ifdef XCURSES
 char *XCursesProgramName="cdklabel";
+#endif
+
+#if !defined (HAVE_SLEEP) && defined (_WIN32)  /* Mingw */
+#define sleep(x) _sleep(x*1000)
 #endif
 
 /*
@@ -39,7 +43,7 @@ int main (int argc, char **argv)
    int xpos;
    int ypos;
 
-   CDKparseParams(argc, argv, &params, "c:f:m:p:s:" "X:Y:NS");
+   CDKparseParams(argc, argv, &params, "c:f:m:p:s:" CDK_MIN_PARAMS);
 
    xpos         = CDKparamValue(&params, 'X', CENTER);
    ypos         = CDKparamValue(&params, 'Y', CENTER);

@@ -1,9 +1,38 @@
 Cdk Version Change List
 Copyright Mike Glover, 1995, 1996, 1997, 1998, 1999
-Modifications copyright Thomas E. Dickey 1999-2005, 2006
+Modifications copyright Thomas E. Dickey 1999-2007, 2008
 -------------------------------------------------------------------------------
 
 This file outlines all of the changes/additions from one release to another.
+
+2008/11/05
+	+ modify matrix widget so that if title, row-title, column-title or
+	  box-border are suppressed, the widget will shrink the matrix rather
+	  than leave those parts blank (request by Vincenzo Romano).
+	+ modify matrix_ex example to allow turning off title, column- and
+	  row-headers using -t, -c and -r options, and changing sense of -S
+	  option to allow turning off shadows.
+	+ fix a limit-check in getcCDKObject(), found with valgrind in
+	  buttonbox_ex.
+	+ apply same limit-check to radio.c as from selection.c
+	+ fix a limit-check in selection.c (report by Robin Lee Powell).
+	+ add -f/-h options to examples/selection_ex.c to test change to
+	  label.c
+	+ fix a case where focus would be lost on a selection widget if there
+	  was also a label on the screen, and both were repainted (report
+	  by Robin Lee Powell).
+	+ make CDK build/work with MinGW (patch by Gregory Sharp).
+	+ correct setCDKTemplateValue() logic, which caused the source to
+	  be repeated (report/patch by Christian Gaida).
+	+ use prefix makefile-variable in DOCUMENT_DIR expression to allow
+	  override of prefix at build-time (patch by Saurabh Nix).
+	+ increase a buffer size in calendar.c (Debian #452401).
+	+ allow widgets to create empty lists, a feature assumed by Harry
+	  Brueckner's cpm program (reports by Lars Strand, Harry Brueckner).
+	+ modify Makefile.in for consistent usage of DESTDIR.
+	+ add cdk5-config script to install
+	+ update configure script, e.g., tests for curses libraries.
+	+ update config.guess, config.sub
 
 2006/05/07
 	+ reduce the number of calls on touchwin(), which is used mainly for
@@ -298,10 +327,10 @@ This file outlines all of the changes/additions from one release to another.
 	+ cleanup menu in traverse.c if escape character is used to cancel it.
 	+ move curs_set() calls out of focus/unfocus functions, into traverse.c
 	+ remove the SIGBUS/SIGSEGV handler, since it is redundant.
-	+ updated configure script (CF_ADD_CFLAGS, CF_CHECK_CACHE,
-	  CF_GCC_WARNINGS, CF_NCURSES_LIBS, CF_PROG_EXT, CF_WITH_DBMALLOC,
-	  CF_WITH_DMALLOC, CF_WITH_LIBTOOL, CF_WITH_WARNINGS, CF_X_ATHENA,
-	  CF_X_TOOLKIT).
+	+ updated configure script, e.g,.  macros CF_ADD_CFLAGS,
+	  CF_CHECK_CACHE, CF_GCC_WARNINGS, CF_NCURSES_LIBS, CF_PROG_EXT,
+	  CF_WITH_DBMALLOC, CF_WITH_DMALLOC, CF_WITH_LIBTOOL, CF_WITH_WARNINGS,
+	  CF_X_ATHENA, CF_X_TOOLKIT.
 	+ updated config.guess, config.sub
 	> patches by ewigg (Ed Wigg?) for fselect.c:
 	+ add a range check to ensure that filename completion at the end of
