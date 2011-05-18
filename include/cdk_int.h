@@ -1,5 +1,5 @@
 /*
- * $Id: cdk_int.h,v 1.22 2009/02/15 23:43:21 tom Exp $
+ * $Id: cdk_int.h,v 1.25 2011/05/16 22:20:21 tom Exp $
  */
 
 #ifndef CDKINCLUDES
@@ -13,7 +13,7 @@ extern "C" {
 #include <cdk.h>
 
 /*
- * Copyright 2003-2005,2009 Thomas E. Dickey
+ * Copyright 2003-2009,2011 Thomas E. Dickey
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,12 +45,12 @@ extern "C" {
  * SUCH DAMAGE.
  */
 
-#define typeCallocN(type,n)     (type*)calloc(n, sizeof(type))
+#define typeCallocN(type,n)     (type*)calloc((size_t)(n), sizeof(type))
 #define typeCalloc(type)        typeCallocN(type,1)
 
-#define typeReallocN(type,p,n)  (type*)realloc(p, (n) * sizeof(type))
+#define typeReallocN(type,p,n)  (type*)realloc(p, (size_t)(n) * sizeof(type))
 
-#define typeMallocN(type,n)     (type*)malloc((n) * sizeof(type))
+#define typeMallocN(type,n)     (type*)malloc((size_t)(n) * sizeof(type))
 #define typeMalloc(type)        typeMallocN(type,1)
 
 #define freeChecked(p)          if ((p) != 0) free (p)
@@ -231,7 +231,7 @@ extern "C" {
 		} \
  \
 		if ((w)->listSize > 0 && maxViewSize((w)) > 0) { \
-		   (w)->step = (maxViewSize((w)) / (float)(w)->listSize); \
+		   (w)->step = (float) (maxViewSize((w)) / (double)(w)->listSize); \
 		   (w)->toggleSize = ((w)->listSize > (maxViewSize((w))) ?  1 : ceilCDK((w)->step)); \
 		} else { \
 		   (w)->step = 1; \

@@ -2,8 +2,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2009/02/16 00:06:40 $
- * $Revision: 1.148 $
+ * $Date: 2011/05/16 22:22:03 $
+ * $Revision: 1.151 $
  */
 
 /*
@@ -49,16 +49,16 @@ CDKSCROLL *newCDKScroll (CDKSCREEN *cdkscreen,
 			 boolean Box,
 			 boolean shadow)
 {
-   CDKSCROLL *scrollp		= 0;
-   int parentWidth		= getmaxx (cdkscreen->window);
-   int parentHeight		= getmaxy (cdkscreen->window);
-   int boxWidth			= width;
-   int boxHeight		= height;
-   int xpos			= xplace;
-   int ypos			= yplace;
-   int scrollAdjust		= 0;
+   /* *INDENT-EQLS* */
+   CDKSCROLL *scrollp           = 0;
+   int parentWidth              = getmaxx (cdkscreen->window);
+   int parentHeight             = getmaxy (cdkscreen->window);
+   int boxWidth                 = width;
+   int boxHeight                = height;
+   int xpos                     = xplace;
+   int ypos                     = yplace;
+   int scrollAdjust             = 0;
    int x;
-
    /* *INDENT-OFF* */
    static const struct { int from; int to; } bindings[] = {
 		{ CDK_BACKCHAR,	KEY_PPAGE },
@@ -173,18 +173,18 @@ CDKSCROLL *newCDKScroll (CDKSCREEN *cdkscreen,
 			      SCREEN_XPOS (scrollp, xpos)
 			      + (splace == LEFT ? 1 : 0));
 
-   /* Set the rest of the variables */
-   ScreenOf (scrollp)		= cdkscreen;
-   scrollp->parent		= cdkscreen->window;
-   scrollp->shadowWin		= 0;
-   scrollp->scrollbarPlacement	= splace;
-   scrollp->maxLeftChar		= 0;
-   scrollp->leftChar		= 0;
-   scrollp->highlight		= highlight;
+   /* *INDENT-EQLS* Set the rest of the variables */
+   ScreenOf (scrollp)           = cdkscreen;
+   scrollp->parent              = cdkscreen->window;
+   scrollp->shadowWin           = 0;
+   scrollp->scrollbarPlacement  = splace;
+   scrollp->maxLeftChar         = 0;
+   scrollp->leftChar            = 0;
+   scrollp->highlight           = highlight;
    initExitType (scrollp);
    ObjOf (scrollp)->acceptsFocus = TRUE;
-   ObjOf (scrollp)->inputWindow  = scrollp->win;
-   scrollp->shadow		= shadow;
+   ObjOf (scrollp)->inputWindow = scrollp->win;
+   scrollp->shadow              = shadow;
 
    setCDKScrollPosition (scrollp, 0);
 
@@ -205,8 +205,12 @@ CDKSCROLL *newCDKScroll (CDKSCREEN *cdkscreen,
    }
 
    /* Setup the key bindings. */
-   for (x = 0; x < (int) SIZEOF (bindings); ++x)
-      bindCDKObject (vSCROLL, scrollp, bindings[x].from, getcCDKBind, (void *)(long)bindings[x].to);
+   for (x = 0; x < (int)SIZEOF (bindings); ++x)
+      bindCDKObject (vSCROLL,
+		     scrollp,
+		     (chtype)bindings[x].from,
+		     getcCDKBind,
+		     (void *)(long)bindings[x].to);
 
    registerCDKObject (cdkscreen, vSCROLL, scrollp);
 
@@ -244,7 +248,7 @@ int activateCDKScroll (CDKSCROLL *scrollp, chtype *actions)
       for (;;)
       {
 	 fixCursorPosition (scrollp);
-	 input = getchCDKObject (ObjOf (scrollp), &functionKey);
+	 input = (chtype)getchCDKObject (ObjOf (scrollp), &functionKey);
 
 	 /* Inject the character into the widget. */
 	 ret = injectCDKScroll (scrollp, input);
@@ -358,8 +362,8 @@ static int _injectCDKScroll (CDKOBJS *object, chtype input)
 	    complete = TRUE;
 	    break;
 
-	 case KEY_ERROR :
-	    setExitType(widget, input);
+	 case KEY_ERROR:
+	    setExitType (widget, input);
 	    complete = TRUE;
 	    break;
 
@@ -461,13 +465,14 @@ static void _moveCDKScroll (CDKOBJS *object,
 			    boolean relative,
 			    boolean refresh_flag)
 {
+   /* *INDENT-EQLS* */
    CDKSCROLL *scrollp = (CDKSCROLL *)object;
-   int currentX = getbegx (scrollp->win);
-   int currentY = getbegy (scrollp->win);
-   int xpos	= xplace;
-   int ypos	= yplace;
-   int xdiff	= 0;
-   int ydiff	= 0;
+   int currentX       = getbegx (scrollp->win);
+   int currentY       = getbegy (scrollp->win);
+   int xpos           = xplace;
+   int ypos           = yplace;
+   int xdiff          = 0;
+   int ydiff          = 0;
 
    /*
     * If this is a relative move, then we will adjust where we want
@@ -593,7 +598,7 @@ static void drawCDKScrollList (CDKSCROLL *scrollp, boolean Box)
       /* Determine where the toggle is supposed to be. */
       if (scrollp->scrollbarWin != 0)
       {
-	 scrollp->togglePos = floorCDK (scrollp->currentItem * scrollp->step);
+	 scrollp->togglePos = floorCDK (scrollp->currentItem * (double)scrollp->step);
 
 	 /* Make sure the toggle button doesn't go out of bounds. */
 
@@ -686,12 +691,13 @@ static boolean allocListArrays (CDKSCROLL *scrollp,
 				int oldSize,
 				int newSize)
 {
+   /* *INDENT-EQLS* */
    boolean result;
    int n;
-   int nchunk = ((newSize + 1) | 31) + 1;
-   chtype ** newList	= typeCallocN (chtype *, nchunk);
-   int * newLen		= typeCallocN (int, nchunk);
-   int * newPos		= typeCallocN (int, nchunk);
+   int nchunk           = ((newSize + 1) | 31) + 1;
+   chtype **newList     = typeCallocN (chtype *, nchunk);
+   int *newLen          = typeCallocN (int, nchunk);
+   int *newPos          = typeCallocN (int, nchunk);
 
    if (newList != 0 &&
        newLen != 0 &&
@@ -711,7 +717,7 @@ static boolean allocListArrays (CDKSCROLL *scrollp,
 	 freeChecked (scrollp->itemLen);
       }
 
-      scrollp->item    = newList;
+      scrollp->item = newList;
       scrollp->itemLen = newLen;
       scrollp->itemPos = newPos;
       result = TRUE;
@@ -729,13 +735,13 @@ static boolean allocListArrays (CDKSCROLL *scrollp,
 static boolean allocListItem (CDKSCROLL *scrollp,
 			      int which,
 			      char **work,
-			      unsigned *used,
+			      size_t * used,
 			      int number,
 			      char *value)
 {
    if (number > 0)
    {
-      unsigned need = NUMBER_LEN (value);
+      size_t need = NUMBER_LEN (value);
       if (need > *used)
       {
 	 *used = ((need + 2) * 2);
@@ -779,10 +785,11 @@ static int createCDKScrollItemList (CDKSCROLL *scrollp,
 
    if (listSize > 0)
    {
-      int widestItem		= 0;
-      int x			= 0;
-      unsigned have		= 0;
-      char *temp		= 0;
+      /* *INDENT-EQLS* */
+      int widestItem            = 0;
+      int x                     = 0;
+      size_t have               = 0;
+      char *temp                = 0;
 
       if (allocListArrays (scrollp, 0, listSize))
       {
@@ -923,7 +930,7 @@ static void resequence (CDKSCROLL *scrollp)
 	       scrollp->itemLen[j] -= 1;
 	    }
 	    target[k] &= A_ATTRIBUTES;
-	    target[k] |= source[k];
+	    target[k] |= (chtype)source[k];
 	 }
       }
    }
@@ -949,7 +956,7 @@ void addCDKScrollItem (CDKSCROLL *scrollp, char *item)
    int itemNumber = scrollp->listSize;
    int widestItem = WidestItem (scrollp);
    char *temp = 0;
-   unsigned have = 0;
+   size_t have = 0;
 
    if (allocListArrays (scrollp, scrollp->listSize, scrollp->listSize + 1) &&
        allocListItem (scrollp,
@@ -977,7 +984,7 @@ void insertCDKScrollItem (CDKSCROLL *scrollp, char *item)
 {
    int widestItem = WidestItem (scrollp);
    char *temp = 0;
-   unsigned have = 0;
+   size_t have = 0;
 
    if (allocListArrays (scrollp, scrollp->listSize, scrollp->listSize + 1) &&
        insertListItem (scrollp, scrollp->currentItem) &&

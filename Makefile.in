@@ -1,6 +1,6 @@
-# $Id: Makefile.in,v 1.78 2009/02/15 17:50:05 tom Exp $
+# $Id: Makefile.in,v 1.85 2011/05/15 17:34:39 tom Exp $
 #
-#  Copyright 2001-2008,2009 Thomas Dickey
+#  Copyright 2001-2009,2011 Thomas Dickey
 #  Copyright 1999, Mike Glover
 #  All rights reserved.
 #
@@ -36,6 +36,8 @@ SHELL		= /bin/sh
 @SET_MAKE@
 MAKE_RECUR	= @cf_cv_makeflags@ prefix=$(prefix)
 
+CFG_ROOTNAME	= @CFG_ROOTNAME@
+HDR_ROOTNAME	= @HDR_ROOTNAME@
 LIB_ROOTNAME	= @LIB_ROOTNAME@
 LIB_SUFFIX	= @LIB_SUFFIX@
 
@@ -62,9 +64,9 @@ includedir	= @includedir@
 libdir		= @libdir@
 mandir		= @mandir@
 
-DOCUMENT_DIR	= $(prefix)/doc/cdk
+DOCUMENT_DIR	= $(DESTDIR)$(prefix)/doc/cdk
 BIN_DIR		= $(DESTDIR)$(bindir)
-INCLUDE_DIR	= $(DESTDIR)$(includedir)/cdk
+INCLUDE_DIR	= $(DESTDIR)$(includedir)/$(HDR_ROOTNAME)
 LIB_DIR		= $(DESTDIR)$(libdir)
 MAN_DIR		= $(DESTDIR)$(mandir)/man@MAN_TAG@
 MANSECT		= @MANSECT@
@@ -74,6 +76,9 @@ CPP		= @CPP@
 AR		= @AR@
 RANLIB		= @LIB_PREP@
 RM		= rm -f
+LN_S		= @LN_S@
+CTAGS		= @CTAGS@
+ETAGS		= @ETAGS@
 
 LIBS		= @LIBS@
 
@@ -271,7 +276,7 @@ $(CDKLIB) :: $(OBJECTS)
 	@$(RANLIB) $@
 
 cdkshlib $(CDKSHLIB) :: $(CDKSHOBJS)
-	gcc -shared -Wl,-soname=$(SONAME) $(LDFLAGS) -o $(CDKSHLIB) $(CDKSHOBJS)
+	gcc -shared -Wl,-soname=$(SONAME) $(LDFLAGS) $(LIBS) -o $(CDKSHLIB) $(CDKSHOBJS)
 
 #
 # Make the examples directory.
@@ -325,7 +330,7 @@ uninstallCDKReadme ::
 # This installs the CDK man pages.
 #
 install \
-installCDKManPages ::  $(INCLUDE_DIR) headers.sed $(MAN_DIR) manpage.sed $(AUTO_MAN)
+installCDKManPages ::  headers.sed $(MAN_DIR) manpage.sed $(AUTO_MAN)
 	@echo "Installing the CDK man pages in $(MAN_DIR) ..."
 	@for i in $(AUTO_MAN); do \
 	   $(SHELL) $(srcdir)/headers.sh \
@@ -396,14 +401,14 @@ uninstallCDKLibrary ::
 install \
 installCDKHeaderFiles \
 installCDKLibrary :: $(BIN_DIR) cdk-config
-	@echo "Installing CDK package-config"
-	@$(INSTALL) cdk-config $(BIN_DIR)/cdk$(VERSION_MAJOR)-config
+	@echo "Installing script $(CFG_ROOTNAME)$(VERSION_MAJOR)-config"
+	@$(INSTALL_DATA) cdk-config $(BIN_DIR)/$(CFG_ROOTNAME)$(VERSION_MAJOR)-config
 
 uninstall \
 uninstallCDKHeaderFiles \
 uninstallCDKLibrary :: cdk-config
-	@echo "Uninstalling CDK package-config"
-	@$(RM) $(BIN_DIR)/cdk$(VERSION_MAJOR)-config
+	@echo "Uninstalling script $(CFG_ROOTNAME)$(VERSION_MAJOR)-config"
+	@$(RM) $(BIN_DIR)/$(CFG_ROOTNAME)$(VERSION_MAJOR)-config
 
 #
 # This installs the CDK shared library.  The rules are for an RPM spec, and
@@ -413,8 +418,8 @@ installCDKSHLibrary :: $(LIB_DIR) $(CDKSHLIB)
 	@echo "Installing CDK library"
 	@echo "	$(INSTALL_DATA) $(CDKSHLIB) $(LIB_DIR)"
 	@$(INSTALL_DATA) $(CDKSHLIB) $(LIB_DIR)
-	@echo " ln -sf $(CDKSHLIB) $(LIB_DIR)/@LIB_PREFIX@@LIB_ROOTNAME@.so"
-	@ln -sf $(CDKSHLIB) $(LIB_DIR)/@LIB_PREFIX@@LIB_ROOTNAME@.so
+	@echo " $(LN_S) $(CDKSHLIB) $(LIB_DIR)/@LIB_PREFIX@@LIB_ROOTNAME@.so"
+	@$(SHELL) -c "cd $(LIB_DIR) && $(LN_S) $(CDKSHLIB) @LIB_PREFIX@@LIB_ROOTNAME@.so"
 
 uninstall \
 uninstallCDKSHLibrary ::
@@ -430,10 +435,10 @@ manpage.sed :
 	@echo "/^\.TH/s/\<3\>/$(MANSECT)/" >>$@
 
 @MAKE_LOWER_TAGS@tags :
-@MAKE_LOWER_TAGS@	ctags *.[ch] */*.[ch]
+@MAKE_LOWER_TAGS@	$(CTAGS) *.[ch] */*.[ch]
 
 @MAKE_LOWER_TAGS@TAGS :
-@MAKE_LOWER_TAGS@	etags *.[ch] */*.[ch]
+@MAKE_LOWER_TAGS@	$(ETAGS) *.[ch] */*.[ch]
 
 #
 # Clean up after ourselves...
@@ -475,15 +480,15 @@ distclean :: realclean
 # Standard .c to .o compile line.
 #
 .c.o:
-@RULE_CC@
+	@RULE_CC@
 	@ECHO_CC@$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) $(CPPFLAGS) -c $<
 
 .c.i:
-@RULE_CC@
+	@RULE_CC@
 	@ECHO_CC@$(CPP) $(CPPFLAGS) -E -C $< >$@
 
 .c.os:
-@RULE_CC@
+	@RULE_CC@
 	@ECHO_CC@$(CC) $(CFLAGS) $(CPPFLAGS) -c -fPIC $< -o $@	
 
 man \
@@ -491,7 +496,7 @@ $(BIN_DIR) \
 $(DOCUMENT_DIR) \
 $(INCLUDE_DIR) \
 $(LIB_DIR) \
-$(MAN_DIR) : ; $(srcdir)/mkdirs.sh $@
+$(MAN_DIR) : ; mkdir -p $@
 
 #
 # Files generated from templates:
