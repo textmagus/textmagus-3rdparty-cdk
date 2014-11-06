@@ -4,8 +4,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2011/05/15 19:27:06 $
- * $Revision: 1.35 $
+ * $Date: 2013/06/16 13:20:52 $
+ * $Revision: 1.37 $
  */
 
 DeclareCDKObjects (BUTTON, Button, setCdk, Int);
@@ -16,7 +16,7 @@ DeclareCDKObjects (BUTTON, Button, setCdk, Int);
 CDKBUTTON *newCDKButton (CDKSCREEN *cdkscreen,
 			 int xplace,
 			 int yplace,
-			 char *text,
+			 const char *text,
 			 tButtonCallback callback,
 			 boolean Box,
 			 boolean shadow)
@@ -138,7 +138,7 @@ int activateCDKButton (CDKBUTTON *button, chtype *actions)
 /*
  * This sets multiple attributes of the widget.
  */
-void setCDKButton (CDKBUTTON *button, char *mesg, boolean Box)
+void setCDKButton (CDKBUTTON *button, const char *mesg, boolean Box)
 {
    setCDKButtonMessage (button, mesg);
    setCDKButtonBox (button, Box);
@@ -147,7 +147,7 @@ void setCDKButton (CDKBUTTON *button, char *mesg, boolean Box)
 /*
  * This sets the information within the button.
  */
-void setCDKButtonMessage (CDKBUTTON *button, char *info)
+void setCDKButtonMessage (CDKBUTTON *button, const char *info)
 {
    /* Clean out the old message. */
    freeChtype (button->info);
@@ -220,7 +220,7 @@ static void drawCDKButtonText (CDKBUTTON *button)
 	 c = A_REVERSE | CharOf (c);
       }
 
-      mvwaddch (button->win, BorderOf (button), i + BorderOf (button), c);
+      (void)mvwaddch (button->win, BorderOf (button), i + BorderOf (button), c);
    }
 }
 

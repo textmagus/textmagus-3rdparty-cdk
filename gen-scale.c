@@ -2,8 +2,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2011/05/15 18:33:50 $
- * $Revision: 1.22 $
+ * $Date: 2013/06/16 15:03:13 $
+ * $Revision: 1.24 $
  */
 
 /*
@@ -19,8 +19,8 @@ DeclareCDKObjects (<UPPER>, <MIXED>, setCdk, <DTYPE>);
 CDK<UPPER> *newCDK<MIXED> (CDKSCREEN *cdkscreen,
 			   int xplace,
 			   int yplace,
-			   char *title,
-			   char *label,
+			   const char *title,
+			   const char *label,
 			   chtype fieldAttr,
 			   int fieldWidth,
 			   <CTYPE> start,
@@ -64,7 +64,6 @@ CDK<UPPER> *newCDK<MIXED> (CDKSCREEN *cdkscreen,
    setCDK<MIXED>Box (widget, Box);
 
    boxHeight = (BorderOf (widget) * 2) + 1;
-   boxWidth = fieldWidth + 2 * BorderOf (widget);
 
    /* Set some basic values of the widget's data field. */
    widget->label = 0;

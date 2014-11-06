@@ -1,6 +1,6 @@
-# $Id: Makefile.in,v 1.85 2011/05/15 17:34:39 tom Exp $
+# $Id: Makefile.in,v 1.120 2014/11/02 23:27:13 tom Exp $
 #
-#  Copyright 2001-2009,2011 Thomas Dickey
+#  Copyright 2001-2013,2014 Thomas E. Dickey
 #  Copyright 1999, Mike Glover
 #  All rights reserved.
 #
@@ -36,17 +36,24 @@ SHELL		= /bin/sh
 @SET_MAKE@
 MAKE_RECUR	= @cf_cv_makeflags@ prefix=$(prefix)
 
+PACKAGE		= @PACKAGE@
+
 CFG_ROOTNAME	= @CFG_ROOTNAME@
 HDR_ROOTNAME	= @HDR_ROOTNAME@
 LIB_ROOTNAME	= @LIB_ROOTNAME@
-LIB_SUFFIX	= @LIB_SUFFIX@
+LIB_SUFFIX	= @DFT_LIB_SUFFIX@
 
 VERSION_MAJOR	= @VERSION_MAJOR@
 VERSION_MINOR	= @VERSION_MINOR@
 VERSION		= $(VERSION_MAJOR).$(VERSION_MINOR)
-CDKLIB		= @LIB_PREFIX@@LIB_ROOTNAME@$(LIB_SUFFIX)
-CDKSHLIB	= @LIB_PREFIX@@LIB_ROOTNAME@.so.$(VERSION)
-SONAME		= @LIB_PREFIX@@LIB_ROOTNAME@.so.$(VERSION_MAJOR)
+REL_VERSION	= @REL_VERSION@
+ABI_VERSION	= @ABI_VERSION@
+@SET_SHLIB_VARS@
+CDKLIB		= @LIB_TARGET@
+IMPORT_LIB	= lib$(LIB_ROOTNAME).dll.a
+@MAKE_NORMAL@OLD_SHLIB_LINK	= @LIB_PREFIX@$(LIB_ROOTNAME).so
+@MAKE_NORMAL@OLD_SONAME	= $(OLD_SHLIB_LINK).$(VERSION_MAJOR)
+@MAKE_NORMAL@OLD_SHLIB_FILE	= $(OLD_SONAME).$(VERSION_MINOR)
 
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
@@ -56,17 +63,22 @@ VPATH		= $(srcdir)
 
 x		= @EXEEXT@
 o		= .@OBJEXT@
-a		= @LIB_SUFFIX@
+a		= $(LIB_SUFFIX)
 
 DESTDIR		=
 bindir		= @bindir@
 includedir	= @includedir@
 libdir		= @libdir@
+shlibdir	= @shlibdir@
+datarootdir	= @datarootdir@
+datadir		= @datadir@
 mandir		= @mandir@
 
-DOCUMENT_DIR	= $(DESTDIR)$(prefix)/doc/cdk
+DOCUMENT_DIR	= $(DESTDIR)$(datadir)/doc/$(PACKAGE)
 BIN_DIR		= $(DESTDIR)$(bindir)
-INCLUDE_DIR	= $(DESTDIR)$(includedir)/$(HDR_ROOTNAME)
+INCLUDE_DIR	= $(DESTDIR)$(includedir)
+INCLUDE_SUBDIR	= $(DESTDIR)$(includedir)/$(HDR_ROOTNAME)
+SHLIB_DIR	= $(DESTDIR)$(shlibdir)
 LIB_DIR		= $(DESTDIR)$(libdir)
 MAN_DIR		= $(DESTDIR)$(mandir)/man@MAN_TAG@
 MANSECT		= @MANSECT@
@@ -79,6 +91,8 @@ RM		= rm -f
 LN_S		= @LN_S@
 CTAGS		= @CTAGS@
 ETAGS		= @ETAGS@
+LINT		= @LINT@
+LINT_OPTS	= @LINT_OPTS@
 
 LIBS		= @LIBS@
 
@@ -86,14 +100,17 @@ CFLAGS		= @CFLAGS@ @EXTRA_CFLAGS@
 CPPFLAGS	= @DEFS@ -I./include -I$(srcdir)/include @CPPFLAGS@
 
 LDFLAGS		= @LDFLAGS@
+RPATH_LIST	= @RPATH_LIST@
 
 LIBTOOL		= @LIBTOOL@ @ECHO_LT@
+LIBTOOL_OPTS	= @LIBTOOL_OPTS@
 LIBTOOL_CLEAN	= @LIB_CLEAN@
 LIBTOOL_COMPILE	= @LIB_COMPILE@
 LIBTOOL_CREATE	= @LIB_CREATE@ $(EXTRA_LDFLAGS)
 LIBTOOL_LINK	= @LIB_LINK@
 LIBTOOL_INSTALL	= @LIB_INSTALL@
 LIBTOOL_UNINSTALL = @LIB_UNINSTALL@
+LIBTOOL_VERSION = @LIBTOOL_VERSION@
 
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= $(LIBTOOL_INSTALL) @INSTALL_PROGRAM@
@@ -101,11 +118,9 @@ INSTALL_DATA	= @INSTALL_DATA@
 INSTALL_LIB	= $(LIBTOOL_INSTALL) $(INSTALL_DATA)
 UNINSTALL_LIB	= $(LIBTOOL_UNINSTALL) $(RM)
 
-.SUFFIXES: .c .o .os .i
+.SUFFIXES: .c .o .lo .os .i
 
-DEFAULT		= $(CDKLIB)
-
-default :: $(DEFAULT)
+default :: $(CDKLIB)
 
 #
 # Create the file lists.
@@ -151,6 +166,7 @@ CDKHDR		= \
 		cdk_compat.h \
 		cdk_objs.h \
 		cdk_params.h \
+		cdk_test.h \
 		cdk_util.h \
 		cdk_version.h \
 		cdkscreen.h \
@@ -169,6 +185,7 @@ CDKHDR		= \
 		menu.h \
 		radio.h \
 		scroll.h \
+		scroller.h \
 		selection.h \
 		swindow.h \
 		template.h \
@@ -208,6 +225,7 @@ CDKSRC		= \
 		position.c \
 		radio.c \
 		scroll.c \
+		scroller.c \
 		selection.c \
 		swindow.c \
 		select_file.c \
@@ -269,14 +287,10 @@ $(OBJECTS) :	include/cdk_config.h
 #
 # Standard library directive.
 #
-all cdklib :: $(DEFAULT)
+all cdklib :: $(CDKLIB)
 
-$(CDKLIB) :: $(OBJECTS)
-	@echo creating $@; $(LIBTOOL_CREATE) $@ $(LIB_OBJECT)
-	@$(RANLIB) $@
-
-cdkshlib $(CDKSHLIB) :: $(CDKSHOBJS)
-	gcc -shared -Wl,-soname=$(SONAME) $(LDFLAGS) $(LIBS) -o $(CDKSHLIB) $(CDKSHOBJS)
+@MAKE_NORMAL@cdkshlib $(OLD_SHLIB_FILE) :: $(CDKSHOBJS)
+@MAKE_NORMAL@	gcc -shared -Wl,-soname=$(OLD_SONAME) $(LDFLAGS) $(LIBS) -o $(OLD_SHLIB_FILE) $(CDKSHOBJS)
 
 #
 # Make the examples directory.
@@ -343,7 +357,7 @@ installCDKManPages ::  headers.sed $(MAN_DIR) manpage.sed $(AUTO_MAN)
 	done
 	@for i in $(CDKMAN); do \
 	   $(SHELL) $(srcdir)/headers.sh \
-	   		-x "$(INSTALL_DATA)" \
+			-x "$(INSTALL_DATA)" \
 			-d $(MAN_DIR) \
 			-s . \
 			-t $(MANSECT) \
@@ -364,36 +378,54 @@ uninstallCDKManPages ::
 #
 # This installs the header files.
 #
+HDR_SUBDIR = @HDR_SUBDIR@ -h cdk.h
+HEADERS_SH = $(SHELL) $(srcdir)/headers.sh $(HDR_SUBDIR) -x "$(INSTALL_DATA)" -d $(INCLUDE_SUBDIR) -s $(srcdir)
 install \
-installCDKHeaderFiles ::  $(INCLUDE_DIR) headers.sed $(MY_HDR)
-	@echo "Installing CDK header files in $(INCLUDE_DIR)..."
-	$(SHELL) $(srcdir)/headers.sh -x "$(INSTALL_DATA)" -d $(INCLUDE_DIR) -s $(srcdir) $(MY_HDR)
+installCDKHeaderFiles :: \
+		$(INCLUDE_DIR) \
+		$(INCLUDE_SUBDIR) \
+		headers.sed \
+		$(MY_HDR)
+	@echo "Installing CDK header files in $(INCLUDE_SUBDIR)..."
+	$(HEADERS_SH) $(MY_HDR)
 	@for i in $(CDKHDR); do \
-	   $(SHELL) $(srcdir)/headers.sh -x "$(INSTALL_DATA)" -d $(INCLUDE_DIR) -s $(srcdir) include/$$i; \
+	   $(HEADERS_SH) include/$$i; \
 	done
+@HDR_SUBDIR@	rm -f $(INCLUDE_DIR)/cdk.h && mv $(INCLUDE_SUBDIR)/cdk.h $(INCLUDE_DIR)/$(PACKAGE).h
 
 uninstall \
 uninstallCDKHeaderFiles ::
-	@echo "Uninstalling CDK header files from $(INCLUDE_DIR)..."
+	@echo "Uninstalling CDK header files from $(INCLUDE_SUBDIR)..."
 	@- for i in $(MY_HDR); do \
-	   $(RM) $(INCLUDE_DIR)/`basename $$i`; \
+	   $(RM) $(INCLUDE_SUBDIR)/`basename $$i`; \
 	done
 	@- for i in $(CDKHDR); do \
-	   $(RM) $(INCLUDE_DIR)/$$i; \
+	   $(RM) $(INCLUDE_SUBDIR)/$$i; \
 	done
+@HDR_SUBDIR@	rm -f $(INCLUDE_DIR)/cdk.h
 
 #
 # This installs the CDK library.
 #
 install \
-installCDKLibrary :: $(LIB_DIR) $(CDKLIB)
+installCDKLibrary :: $(SHLIB_DIR) $(CDKLIB)
 	@echo "Installing CDK library"
-	@$(INSTALL_LIB) $(CDKLIB) $(LIB_DIR)/$(CDKLIB)
+	@$(INSTALL_LIB) $(CDKLIB) $(SHLIB_DIR)/$(CDKLIB)
 
 uninstall \
 uninstallCDKLibrary ::
 	@echo "Uninstalling CDK library"
-	@- $(UNINSTALL_LIB) $(LIB_DIR)/$(CDKLIB) 
+	@- $(UNINSTALL_LIB) $(SHLIB_DIR)/$(CDKLIB)
+
+@MAKE_DLLS@install \
+@MAKE_DLLS@installImportLibrary :: $(LIB_DIR) $(IMPORT_LIB)
+@MAKE_DLLS@	@echo "Installing Import library"
+@MAKE_DLLS@	@$(INSTALL_LIB) $(IMPORT_LIB) $(LIB_DIR)/$(IMPORT_LIB)
+
+@MAKE_DLLS@uninstall \
+@MAKE_DLLS@uninstallImportLibrary ::
+@MAKE_DLLS@	@echo "Uninstalling Import library"
+@MAKE_DLLS@	@- $(UNINSTALL_LIB) $(LIB_DIR)/$(IMPORT_LIB)
 
 #
 # This installs the CDK package-config script.
@@ -402,7 +434,7 @@ install \
 installCDKHeaderFiles \
 installCDKLibrary :: $(BIN_DIR) cdk-config
 	@echo "Installing script $(CFG_ROOTNAME)$(VERSION_MAJOR)-config"
-	@$(INSTALL_DATA) cdk-config $(BIN_DIR)/$(CFG_ROOTNAME)$(VERSION_MAJOR)-config
+	@$(INSTALL) cdk-config $(BIN_DIR)/$(CFG_ROOTNAME)$(VERSION_MAJOR)-config
 
 uninstall \
 uninstallCDKHeaderFiles \
@@ -414,20 +446,20 @@ uninstallCDKLibrary :: cdk-config
 # This installs the CDK shared library.  The rules are for an RPM spec, and
 # not of general interest.
 #
-installCDKSHLibrary :: $(LIB_DIR) $(CDKSHLIB)
-	@echo "Installing CDK library"
-	@echo "	$(INSTALL_DATA) $(CDKSHLIB) $(LIB_DIR)"
-	@$(INSTALL_DATA) $(CDKSHLIB) $(LIB_DIR)
-	@echo " $(LN_S) $(CDKSHLIB) $(LIB_DIR)/@LIB_PREFIX@@LIB_ROOTNAME@.so"
-	@$(SHELL) -c "cd $(LIB_DIR) && $(LN_S) $(CDKSHLIB) @LIB_PREFIX@@LIB_ROOTNAME@.so"
-
-uninstall \
-uninstallCDKSHLibrary ::
-	@- $(RM) $(LIB_DIR)/@LIB_PREFIX@@LIB_ROOTNAME@.so
-	@- $(RM) $(LIB_DIR)/$(CDKSHLIB) 
+@MAKE_NORMAL@installCDKSHLibrary :: $(SHLIB_DIR) $(OLD_SHLIB_FILE)
+@MAKE_NORMAL@	@echo "Installing CDK library"
+@MAKE_NORMAL@	@ECHO_CC@$(INSTALL_DATA) $(OLD_SHLIB_FILE) $(SHLIB_DIR)
+@MAKE_NORMAL@	@ECHO_CC@$(SHELL) -c "cd $(SHLIB_DIR) && $(LN_S) $(OLD_SHLIB_FILE) $(OLD_SONAME)"
+@MAKE_NORMAL@	@ECHO_CC@$(SHELL) -c "cd $(SHLIB_DIR) && $(LN_S) $(OLD_SHLIB_FILE) $(OLD_SHLIB_LINK)"
+@MAKE_NORMAL@
+@MAKE_NORMAL@uninstall \
+@MAKE_NORMAL@uninstallCDKSHLibrary ::
+@MAKE_NORMAL@	@ECHO_CC@- $(RM) $(SHLIB_DIR)/$(LIB_BASENAME)
+@MAKE_NORMAL@	@ECHO_CC@- $(RM) $(SHLIB_DIR)/$(OLD_SONAME)
+@MAKE_NORMAL@	@ECHO_CC@- $(RM) $(SHLIB_DIR)/$(OLD_SHLIB_FILE)
 
 headers.sed : $(srcdir)/headers.sh
-	$(SHELL) $(srcdir)/headers.sh -p CDK -c include/cdk_config.h -d $(INCLUDE_DIR) -s $(srcdir)/include -i -s include -i
+	$(SHELL) $(srcdir)/headers.sh -p CDK $(HDR_SUBDIR) -c include/cdk_config.h -d $(INCLUDE_SUBDIR) -s $(srcdir)/include -i -s include -i
 
 manpage.sed :
 	@echo "creating $@"
@@ -440,14 +472,22 @@ manpage.sed :
 @MAKE_LOWER_TAGS@TAGS :
 @MAKE_LOWER_TAGS@	$(ETAGS) *.[ch] */*.[ch]
 
+lint: $(AUTO_HDR) $(AUTO_SRC) $(CDKSRC)
+	$(LINT) $(LINT_OPTS) $(CPPFLAGS) $(AUTO_SRC) $(CDKSRC)
+
+all-lint: lint
+	cd examples 	&& $(MAKE) $(MAKE_RECUR) lint
+	cd demos    	&& $(MAKE) $(MAKE_RECUR) lint
+	cd cli      	&& $(MAKE) $(MAKE_RECUR) lint
+
 #
 # Clean up after ourselves...
 #
 clean ::
 	@- $(RM) -r autom4te.cache
-	- $(LIBTOOL_CLEAN) $(RM) $(LIB_OBJECT) $(CDKLIB)
-	- $(RM) *.i *.os $(CDKSHLIB)
-	- $(RM) headers.sed manpage.sed core tags *~
+	- $(LIBTOOL_CLEAN) $(RM) $(LIB_OBJECT) $(CDKLIB) $(RM_SHARED_OPTS)
+@MAKE_NORMAL@	- $(RM) *.os $(OLD_SHLIB_FILE)
+	- $(RM) headers.sed manpage.sed core tags *.i *~
 	$(RM) $(AUTO_HDR)
 	$(RM) $(AUTO_SRC)
 	$(RM) $(AUTO_MAN)
@@ -469,6 +509,7 @@ distclean :: realclean
 	$(RM) include/cdk_version.h
 	$(RM) Makefile
 	$(RM) cdk-config
+	$(RM) mk_shared_lib.sh     
 	@- $(SHELL) -c 'if test "$(srcdir)" != . ; then \
 			rmdir examples; \
 			rmdir demos; \
@@ -483,18 +524,23 @@ distclean :: realclean
 	@RULE_CC@
 	@ECHO_CC@$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) $(CPPFLAGS) -c $<
 
+.c.lo:
+	@RULE_CC@
+	@ECHO_CC@$(LIBTOOL_COMPILE) $(CC) $(CFLAGS) $(CPPFLAGS) -c $<
+
 .c.i:
 	@RULE_CC@
 	@ECHO_CC@$(CPP) $(CPPFLAGS) -E -C $< >$@
 
 .c.os:
 	@RULE_CC@
-	@ECHO_CC@$(CC) $(CFLAGS) $(CPPFLAGS) -c -fPIC $< -o $@	
+	@ECHO_CC@$(CC) $(CFLAGS) $(CPPFLAGS) -c -fPIC $< -o $@
 
 man \
 $(BIN_DIR) \
 $(DOCUMENT_DIR) \
 $(INCLUDE_DIR) \
+$(INCLUDE_SUBDIR) \
 $(LIB_DIR) \
 $(MAN_DIR) : ; mkdir -p $@
 

@@ -2,8 +2,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2011/05/15 19:27:11 $
- * $Revision: 1.65 $
+ * $Date: 2013/06/16 15:00:10 $
+ * $Revision: 1.67 $
  */
 
 DeclareCDKObjects (BUTTONBOX, Buttonbox, setCdk, Int);
@@ -16,10 +16,10 @@ CDKBUTTONBOX *newCDKButtonbox (CDKSCREEN *cdkscreen,
 			       int yPos,
 			       int height,
 			       int width,
-			       char *title,
+			       const char *title,
 			       int rows,
 			       int cols,
-			       char **buttons,
+			       CDK_CSTRING2 buttons,
 			       int buttonCount,
 			       chtype highlight,
 			       boolean Box,
@@ -421,7 +421,7 @@ static void _drawCDKButtonbox (CDKOBJS *object, boolean Box)
 void drawCDKButtonboxButtons (CDKBUTTONBOX *buttonbox)
 {
    /* *INDENT-EQLS* */
-   int row              = TitleLinesOf (buttonbox) + 1;
+   int row;
    int col              = (int)(buttonbox->colAdjust / 2);
    int currentButton    = 0;
    int x, y;

@@ -1,8 +1,8 @@
-# $Id: cdk.spec,v 1.8 2012/03/18 23:37:15 tom Exp $
+# $Id: cdk.spec,v 1.34 2014/11/06 09:55:51 tom Exp $
 Summary:	Curses Development Kit
 %define AppProgram cdk
 %define AppVersion 5.0
-%define AppRelease 20120318
+%define AppRelease 20141106
 Name:  %{AppProgram}
 Version:  %{AppVersion}
 Release:  %{AppRelease}
@@ -10,7 +10,7 @@ License:  BSD (4-clause)
 Group:  Development/Libraries
 URL:  http://invisible-island.net/%{name}/
 Source0:  %{name}-%{version}-%{release}.tgz
-# BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # BuildRequires:	ncurses-devel
 
 %description
@@ -27,18 +27,26 @@ Requires:	%{name} = %{version}-%{release}
 Development headers for cdk (Curses Development Kit)
 
 %prep
+%define debug_package %{nil}
 %setup -q -n %{name}-%{version}-%{release}
 
 %build
 %configure
+make all
+find . -name '*.o' -exec rm -f {} \;
+
+%configure --with-shared --with-versioned-syms
 #make %{?_smp_mflags} cdkshlib
-make cdkshlib
+make all
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make install installCDKSHLibrary DESTDIR=$RPM_BUILD_ROOT
-rm -fr $RPM_BUILD_ROOT/usr/doc # we don't need this
+make install.libs install \
+	DESTDIR=$RPM_BUILD_ROOT \
+	DOCUMENT_DIR=$RPM_BUILD_ROOT%{_defaultdocdir}/%{name}
+ls -l $RPM_BUILD_ROOT%{_libdir}
 chmod +x $RPM_BUILD_ROOT%{_libdir}/*.so # fixes rpmlint unstripped-binary-or-object
+install -m 644 libcdk.a $RPM_BUILD_ROOT%{_libdir}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -51,16 +59,29 @@ rm -rf $RPM_BUILD_ROOT
 %doc CHANGES COPYING INSTALL NOTES README VERSION
 %{_libdir}/*.so.*
 %exclude %{_libdir}/*.a
-%{_mandir}/man3/*
+%exclude %{_mandir}/man3/*
+%{_defaultdocdir}/%{name}/*
 
 %files devel
 %defattr(-,root,root,-)
 %doc EXPANDING TODO examples demos
+%{_libdir}/*.a
 %{_libdir}/*.so
 %{_bindir}/cdk5-config
+%{_mandir}/man3/*
+%{_includedir}/%{name}.h
 %{_includedir}/%{name}
 
 %changelog
+
+* Wed Nov 05 2014 Thomas E. Dickey
+- move manpages to -devel package
+
+* Sun Nov 02 2014 Thomas E. Dickey
+- change shared library configuration to use --with-shared option
+
+* Tue Mar 20 2012 Thomas E. Dickey
+- install cdk.h in normal location
 
 * Fri May 13 2011 Thomas E. Dickey
 - parameterize/adapt to building from unpatched sources as part of test builds

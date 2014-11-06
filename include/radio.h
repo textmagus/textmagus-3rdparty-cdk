@@ -1,5 +1,5 @@
 /*
- * $Id: radio.h,v 1.28 2005/12/28 21:44:56 tom Exp $
+ * $Id: radio.h,v 1.30 2013/09/01 18:06:41 tom Exp $
  */
 
 #ifndef CDKINCLUDES
@@ -19,8 +19,10 @@ extern "C" {
 #include <cdk_objs.h>
 #endif
 
+#include <scroller.h>
+
 /*
- * Changes 1999-2004,2005 copyright Thomas E. Dickey
+ * Changes 1999-2012,2013 copyright Thomas E. Dickey
  *
  * Copyright 1999, Mike Glover
  * All rights reserved.
@@ -58,42 +60,15 @@ extern "C" {
  * Define the CDK radio list widget structure.
  */
 struct SRadio {
-   CDKOBJS	obj;
-   WINDOW *	parent;
-   WINDOW *	win;
-   WINDOW *	scrollbarWin;
-   WINDOW *	shadowWin;
-   chtype **	item;
-   int *	itemLen;
-   int *	itemPos;
-   int		titleAdj;	/* unused */
+   /* This field must stay on top */
+   SCROLLER_FIELDS;
+
    chtype	choiceChar;
    chtype	leftBoxChar;
    chtype	rightBoxChar;
-   int		maxLeftChar;
    int		widestItem;
-   int		leftChar;
    int		selectedItem;
-   int		currentTop;
-   int		currentItem;
-   int		currentHigh;
-   int		scrollbarPlacement;
-   boolean	scrollbar;
-
-   int		toggleSize;
-   int		togglePos;
-   float	step;
-   int		listSize;
-   int		lastItem;
-   int		maxTopItem;
-   int		boxWidth;
-   int		boxHeight;
-   int		viewSize;
-
    int		defItem;
-   EExitType	exitType;
-   boolean	shadow;
-   chtype	highlight;
 };
 typedef struct SRadio CDKRADIO;
 
@@ -107,8 +82,8 @@ CDKRADIO *newCDKRadio (
 		int		/* spos */,
 		int		/* height */,
 		int		/* width */,
-		char *		/* title */,
-		char **		/* mesg */,
+		const char *	/* title */,
+		CDK_CSTRING2	/* mesg */,
 		int		/* items */,
 		chtype		/* choiceChar */,
 		int		/* defItem */,
@@ -142,7 +117,7 @@ void setCDKRadio (
  */
 void setCDKRadioItems (
 		CDKRADIO *	/* radio */,
-		char **		/* list */,
+		CDK_CSTRING2	/* list */,
 		int		/* listSize */);
 
 int getCDKRadioItems (

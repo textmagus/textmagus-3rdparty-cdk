@@ -2,8 +2,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2011/05/16 22:38:38 $
- * $Revision: 1.207 $
+ * $Date: 2014/11/05 10:20:13 $
+ * $Revision: 1.215 $
  */
 
 #define L_MARKER '<'
@@ -185,7 +185,7 @@ void freeChtypeList (chtype **list, unsigned size)
  * This performs a safe copy of a string. This means it adds the null
  * terminator on the end of the string, like strdup().
  */
-char *copyChar (char *original)
+char *copyChar (const char *original)
 {
    char *newstring = 0;
 
@@ -197,7 +197,7 @@ char *copyChar (char *original)
    return (newstring);
 }
 
-chtype *copyChtype (chtype *original)
+chtype *copyChtype (const chtype *original)
 {
    chtype *newstring = 0;
 
@@ -215,11 +215,6 @@ chtype *copyChtype (chtype *original)
 	 newstring[len] = '\0';
 	 newstring[len + 1] = '\0';
       }
-      else
-      {
-	 newstring = original;
-      }
-
    }
    return (newstring);
 }
@@ -227,7 +222,7 @@ chtype *copyChtype (chtype *original)
 /*
  * Copy the given lists.
  */
-char **copyCharList (char **list)
+char **copyCharList (const char **list)
 {
    size_t size = (size_t) lenCharList (list) + 1;
    char **result = typeMallocN (char *, size);
@@ -241,18 +236,16 @@ char **copyCharList (char **list)
    return result;
 }
 
-chtype **copyChtypeList (chtype **list)
+chtype **copyChtypeList (const chtype **list)
 {
    size_t size = (size_t) lenChtypeList (list) + 1;
    chtype **result = typeMallocN (chtype *, size);
 
    if (result != 0)
    {
-      while (size-- != 0)
-      {
-	 freeChtype (list[size]);
-	 list[size] = 0;
-      }
+      unsigned n;
+      for (n = 0; n < size; ++n)
+	 result[n] = copyChtype (list[n]);
    }
    return result;
 }
@@ -260,7 +253,7 @@ chtype **copyChtypeList (chtype **list)
 /*
  * Return the length of the given lists.
  */
-int lenCharList (char **list)
+int lenCharList (const char **list)
 {
    int result = 0;
    if (list != 0)
@@ -271,7 +264,7 @@ int lenCharList (char **list)
    return result;
 }
 
-int lenChtypeList (chtype **list)
+int lenChtypeList (const chtype **list)
 {
    int result = 0;
    if (list != 0)
@@ -285,7 +278,7 @@ int lenChtypeList (chtype **list)
 /*
  * This reads a file and sticks it into the char *** provided.
  */
-int CDKreadFile (char *filename, char ***array)
+int CDKreadFile (const char *filename, char ***array)
 {
    FILE *fd;
    char temp[BUFSIZ];
@@ -312,7 +305,7 @@ int CDKreadFile (char *filename, char ***array)
 
 #define DigitOf(c) ((c)-'0')
 
-static int encodeAttribute (char *string, int from, chtype *mask)
+static int encodeAttribute (const char *string, int from, chtype *mask)
 {
    int pair = 0;
 
@@ -392,7 +385,6 @@ static unsigned decodeAttribute (char *string,
    };
    /* *INDENT-ON* */
 
-
    char temp[80];
    char *result = (string != 0) ? string : temp;
    char *base = result;
@@ -466,7 +458,7 @@ static unsigned decodeAttribute (char *string,
  * and translates them into a chtype * array. This is better suited
  * to curses, because curses uses chtype almost exclusively
  */
-chtype *char2Chtype (char *string, int *to, int *align)
+chtype *char2Chtype (const char *string, int *to, int *align)
 {
    chtype *result = 0;
    chtype attrib;
@@ -504,7 +496,6 @@ chtype *char2Chtype (char *string, int *to, int *align)
 	 }
 	 adjust = 0;
 	 attrib = A_NORMAL;
-	 lastChar = 0;
 	 start = 0;
 	 used = 0;
 	 x = 3;
@@ -540,7 +531,7 @@ chtype *char2Chtype (char *string, int *to, int *align)
 	       while (string[x] != R_MARKER && string[x] != 0)
 	       {
 		  if (result != 0)
-		     result[x] = (chtype) string[x] | A_BOLD;
+		     result[x] = (chtype)string[x] | A_BOLD;
 		  x++;
 	       }
 	       adjust = 1;
@@ -789,7 +780,7 @@ chtype *char2Chtype (char *string, int *to, int *align)
 /*
  * This determines the length of a chtype string
  */
-int chlen (chtype *string)
+int chlen (const chtype *string)
 {
    int result = 0;
 
@@ -805,7 +796,7 @@ int chlen (chtype *string)
 /*
  * Compare a regular string to a chtype string
  */
-int cmpStrChstr (char *str, chtype *chstr)
+int cmpStrChstr (const char *str, const chtype *chstr)
 {
    int r = 0;
 
@@ -832,7 +823,7 @@ int cmpStrChstr (char *str, chtype *chstr)
    return 0;
 }
 
-void chstrncpy (char *dest, chtype *src, int maxcount)
+void chstrncpy (char *dest, const chtype *src, int maxcount)
 {
    int i = 0;
 
@@ -846,7 +837,7 @@ void chstrncpy (char *dest, chtype *src, int maxcount)
  * This returns a pointer to char * of a chtype *
  * Formatting codes are omitted.
  */
-char *chtype2Char (chtype *string)
+char *chtype2Char (const chtype *string)
 {
    char *newstring = 0;
 
@@ -871,7 +862,7 @@ char *chtype2Char (chtype *string)
  * This returns a pointer to char * of a chtype *
  * Formatting codes are embedded.
  */
-char *chtype2String (chtype *string)
+char *chtype2String (const chtype *string)
 {
    char *newstring = 0;
 
@@ -912,7 +903,7 @@ static int comparSort (const void *a, const void *b)
    return strcmp (*(const char *const *)a, (*(const char *const *)b));
 }
 
-void sortList (char **list, int length)
+void sortList (CDK_CSTRING *list, int length)
 {
    if (length > 1)
       qsort (list, (unsigned)length, sizeof (list[0]), comparSort);
@@ -959,7 +950,7 @@ void stripWhiteSpace (EStripType stripType, char *string)
    }
 }
 
-static unsigned countChar (char *string, int separator)
+static unsigned countChar (const char *string, int separator)
 {
    unsigned result = 0;
    int ch;
@@ -975,10 +966,10 @@ static unsigned countChar (char *string, int separator)
 /*
  * Split a string into a list of strings.
  */
-char **CDKsplitString (char *string, int separator)
+char **CDKsplitString (const char *string, int separator)
 {
    char **result = 0;
-   char *first;
+   const char *first;
    char *temp;
    unsigned item;
    unsigned need;
@@ -1043,7 +1034,7 @@ unsigned CDKallocStrings (char ***list, char *item, unsigned length, unsigned us
 /*
  * Count the number of items in a list of strings.
  */
-unsigned CDKcountStrings (char **list)
+unsigned CDKcountStrings (CDK_CSTRING2 list)
 {
    unsigned result = 0;
    if (list != 0)
@@ -1107,7 +1098,6 @@ int mode2Filetype (mode_t mode)
    };
    /* *INDENT-ON* */
 
-
    int filetype = '?';
    unsigned n;
 
@@ -1161,7 +1151,6 @@ int mode2Char (char *string, mode_t mode)
    };
    /* *INDENT-ON* */
 
-
    /* Declare local variables.  */
    int permissions = 0;
    int filetype = mode2Filetype (mode);
@@ -1212,7 +1201,7 @@ int intlen (int value)
 /*
  * This opens the current directory and reads the contents.
  */
-int CDKgetDirectoryContents (char *directory, char ***list)
+int CDKgetDirectoryContents (const char *directory, char ***list)
 {
    /* Declare local variables.  */
    struct dirent *dirStruct;
@@ -1241,7 +1230,7 @@ int CDKgetDirectoryContents (char *directory, char ***list)
    closedir (dp);
 
    /* Sort the info.  */
-   sortList (*list, counter);
+   sortList ((CDK_CSTRING *)*list, counter);
 
    /* Return the number of files in the directory.  */
    return counter;
@@ -1250,7 +1239,7 @@ int CDKgetDirectoryContents (char *directory, char ***list)
 /*
  * This looks for a subset of a word in the given list.
  */
-int searchList (char **list, int listSize, char *pattern)
+int searchList (CDK_CSTRING2 list, int listSize, const char *pattern)
 {
    /* Declare local variables.  */
    size_t len;
@@ -1294,7 +1283,7 @@ int searchList (char **list, int listSize, char *pattern)
 /*
  * This function checks to see if a link has been requested.
  */
-int checkForLink (char *line, char *filename)
+int checkForLink (const char *line, char *filename)
 {
    int len = 0;
    int fPos = 0;
@@ -1456,17 +1445,11 @@ void moveCursesWindow (WINDOW *window, int xdiff, int ydiff)
       int xpos, ypos;
 
       getbegyx (window, ypos, xpos);
-      if (setbegyx (window, (short)ypos, (short)xpos) != ERR)
-      {
-	 xpos += xdiff;
-	 ypos += ydiff;
-	 werase (window);
-	 (void)setbegyx (window, (short)ypos, (short)xpos);
-      }
-      else
-      {
-	 Beep ();
-      }
+      (void)setbegyx (window, (short)ypos, (short)xpos);
+      xpos += xdiff;
+      ypos += ydiff;
+      werase (window);
+      (void)setbegyx (window, (short)ypos, (short)xpos);
    }
 }
 

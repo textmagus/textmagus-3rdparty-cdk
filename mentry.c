@@ -2,8 +2,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2011/05/15 19:42:13 $
- * $Revision: 1.163 $
+ * $Date: 2013/06/16 13:11:58 $
+ * $Revision: 1.165 $
  */
 
 /*
@@ -19,8 +19,8 @@ DeclareCDKObjects (MENTRY, Mentry, setCdk, String);
 CDKMENTRY *newCDKMentry (CDKSCREEN *cdkscreen,
 			 int xplace,
 			 int yplace,
-			 char *title,
-			 char *label,
+			 const char *title,
+			 const char *label,
 			 chtype fieldAttr,
 			 chtype filler,
 			 EDisplayType dispType,
@@ -664,17 +664,17 @@ void drawCDKMentryField (CDKMENTRY *mentry)
 	 {
 	    if (isHiddenDisplayType (mentry->dispType))
 	    {
-	       mvwaddch (mentry->fieldWin, x, y, mentry->filler);
+	       (void)mvwaddch (mentry->fieldWin, x, y, mentry->filler);
 	    }
 	    else
 	    {
-	       mvwaddch (mentry->fieldWin, x, y,
-			 CharOf (mentry->info[currchar++]) | mentry->fieldAttr);
+	       (void)mvwaddch (mentry->fieldWin, x, y,
+			       CharOf (mentry->info[currchar++]) | mentry->fieldAttr);
 	    }
 	 }
 	 else
 	 {
-	    mvwaddch (mentry->fieldWin, x, y, mentry->filler);
+	    (void)mvwaddch (mentry->fieldWin, x, y, mentry->filler);
 	 }
       }
    }
@@ -834,7 +834,7 @@ static void _destroyCDKMentry (CDKOBJS *object)
 /*
  * This sets multiple attributes of the widget.
  */
-void setCDKMentry (CDKMENTRY *mentry, char *value, int min, boolean Box)
+void setCDKMentry (CDKMENTRY *mentry, const char *value, int min, boolean Box)
 {
    setCDKMentryValue (mentry, value);
    setCDKMentryMin (mentry, min);
@@ -845,7 +845,7 @@ void setCDKMentry (CDKMENTRY *mentry, char *value, int min, boolean Box)
  * This removes the old information in the entry field and keeps the
  * new information given.
  */
-void setCDKMentryValue (CDKMENTRY *mentry, char *newValue)
+void setCDKMentryValue (CDKMENTRY *mentry, const char *newValue)
 {
    /* *INDENT-EQLS* */
    int fieldCharacters  = mentry->rows * mentry->fieldWidth;

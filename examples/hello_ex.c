@@ -1,4 +1,4 @@
-/* $Id: hello_ex.c,v 1.9 2005/12/26 22:04:35 tom Exp $ */
+/* $Id: hello_ex.c,v 1.11 2014/11/05 10:08:32 tom Exp $ */
 
 #include <cdk_test.h>
 
@@ -6,24 +6,23 @@
 char *XCursesProgramName = "hello_ex";
 #endif
 
-int main(int argc, char **argv)
+int main (int argc, char **argv)
 {
-   /* Declare variables. */
-   CDKSCREEN	*cdkscreen;
-   CDKLABEL	*demo;
-   WINDOW	*cursesWin;
-   char		*mesg[4];
+   CDKSCREEN *cdkscreen;
+   CDKLABEL *demo;
+   WINDOW *cursesWin;
+   const char *mesg[4];
 
    CDK_PARAMS params;
 
-   CDKparseParams(argc, argv, &params, CDK_MIN_PARAMS);
+   CDKparseParams (argc, argv, &params, CDK_MIN_PARAMS);
 
    /* Set up CDK. */
-   cursesWin = initscr();
+   cursesWin = initscr ();
    cdkscreen = initCDKScreen (cursesWin);
 
    /* Start CDK Colors. */
-   initCDKColor();
+   initCDKColor ();
 
    /* Set the labels up. */
    mesg[0] = "</5><#UL><#HL(30)><#UR>";
@@ -32,13 +31,11 @@ int main(int argc, char **argv)
 
    /* Declare the labels. */
    demo = newCDKLabel (cdkscreen,
-		       CDKparamValue(&params, 'X', CENTER),
-		       CDKparamValue(&params, 'Y', CENTER),
-		       mesg, 3,
-		       CDKparamValue(&params, 'N', TRUE),
-		       CDKparamValue(&params, 'S', TRUE));
-
-   setCDKLabelBackgroundAttrib (demo, COLOR_PAIR(2));
+		       CDKparamValue (&params, 'X', CENTER),
+		       CDKparamValue (&params, 'Y', CENTER),
+		       (CDK_CSTRING2) mesg, 3,
+		       CDKparamValue (&params, 'N', TRUE),
+		       CDKparamValue (&params, 'S', TRUE));
 
    /* Is the label null? */
    if (demo == 0)
@@ -47,12 +44,13 @@ int main(int argc, char **argv)
       destroyCDKScreen (cdkscreen);
 
       /* End curses... */
-      endCDK();
+      endCDK ();
 
-      /* Spit out a message. */
-      printf ("Oops. Can't seem to create the label. Is the window too small?\n");
+      printf ("Cannot create the label. Is the window too small?\n");
       ExitProgram (EXIT_FAILURE);
    }
+
+   setCDKLabelBackgroundAttrib (demo, COLOR_PAIR (2));
 
    /* Draw the CDK screen. */
    refreshCDKScreen (cdkscreen);
@@ -61,6 +59,6 @@ int main(int argc, char **argv)
    /* Clean up. */
    destroyCDKLabel (demo);
    destroyCDKScreen (cdkscreen);
-   endCDK();
+   endCDK ();
    ExitProgram (EXIT_SUCCESS);
 }

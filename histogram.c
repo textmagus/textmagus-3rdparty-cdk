@@ -2,8 +2,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2010/11/08 01:18:43 $
- * $Revision: 1.87 $
+ * $Date: 2013/06/16 15:05:27 $
+ * $Revision: 1.91 $
  */
 
 DeclareCDKObjects (HISTOGRAM, Histogram, setCdk, Unknown);
@@ -17,7 +17,7 @@ CDKHISTOGRAM *newCDKHistogram (CDKSCREEN *cdkscreen,
 			       int height,
 			       int width,
 			       int orient,
-			       char *title,
+			       const char *title,
 			       boolean Box,
 			       boolean shadow)
 {
@@ -25,8 +25,8 @@ CDKHISTOGRAM *newCDKHistogram (CDKSCREEN *cdkscreen,
    CDKHISTOGRAM *widget = 0;
    int parentWidth      = getmaxx (cdkscreen->window);
    int parentHeight     = getmaxy (cdkscreen->window);
-   int boxWidth         = width;
-   int boxHeight        = height;
+   int boxWidth;
+   int boxHeight;
    int xpos             = xplace;
    int ypos             = yplace;
    int oldWidth         = 0;
@@ -566,7 +566,6 @@ static void _drawCDKHistogram (CDKOBJS *object, boolean Box)
    chtype battr = 0;
    chtype bchar = 0;
    chtype fattr = widget->filler & A_ATTRIBUTES;
-   chtype fchar = CharOf (widget->filler);
    int histX    = TitleLinesOf (widget) + 1;
    int histY    = widget->barSize;
    int len, x, y;
@@ -643,16 +642,15 @@ static void _drawCDKHistogram (CDKOBJS *object, boolean Box)
       for (y = 1; y <= histY; y++)
       {
 	 battr = mvwinch (widget->win, x, y);
-	 fchar = battr & A_ATTRIBUTES;
 	 bchar = CharOf (battr);
 
 	 if (bchar == ' ')
 	 {
-	    mvwaddch (widget->win, x, y, widget->filler);
+	    (void)mvwaddch (widget->win, x, y, widget->filler);
 	 }
 	 else
 	 {
-	    mvwaddch (widget->win, x, y, battr | fattr);
+	    (void)mvwaddch (widget->win, x, y, battr | fattr);
 	 }
       }
    }

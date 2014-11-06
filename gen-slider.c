@@ -2,8 +2,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2011/05/16 22:40:40 $
- * $Revision: 1.23 $
+ * $Date: 2013/06/16 13:19:15 $
+ * $Revision: 1.25 $
  */
 
 /*
@@ -20,8 +20,8 @@ DeclareCDKObjects (<UPPER>, <MIXED>, setCdk, <DTYPE>);
 CDK<UPPER> *newCDK<MIXED> (CDKSCREEN *cdkscreen,
 				 int xplace,
 				 int yplace,
-				 char *title,
-				 char *label,
+				 const char *title,
+				 const char *label,
 				 chtype filler,
 				 int fieldWidth,
 				 <CTYPE> start,
@@ -663,7 +663,7 @@ static void drawCDK<MIXED>Field (CDK<UPPER> *widget)
    /* Add the character to the window. */
    for (x = 0; x < fillerCharacters; x++)
    {
-      mvwaddch (widget->fieldWin, 0, x, widget->filler);
+      (void)mvwaddch (widget->fieldWin, 0, x, widget->filler);
    }
 
    /* Draw the value in the field. */

@@ -2,8 +2,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2011/05/16 22:35:16 $
- * $Revision: 1.218 $
+ * $Date: 2013/06/16 13:12:32 $
+ * $Revision: 1.221 $
  */
 
 /*
@@ -20,8 +20,8 @@ DeclareCDKObjects (ENTRY, Entry, setCdk, String);
 CDKENTRY *newCDKEntry (CDKSCREEN *cdkscreen,
 		       int xplace,
 		       int yplace,
-		       char *title,
-		       char *label,
+		       const char *title,
+		       const char *label,
 		       chtype fieldAttr,
 		       chtype filler,
 		       EDisplayType dispType,
@@ -610,7 +610,7 @@ void cleanCDKEntry (CDKENTRY *entry)
    cleanChar (entry->info, entry->infoWidth, '\0');
 
    /* Clean the entry screen field. */
-   mvwhline (entry->fieldWin, 0, 0, entry->filler, width);
+   (void)mvwhline (entry->fieldWin, 0, 0, entry->filler, width);
 
    /* Reset some variables. */
    entry->screenCol = 0;
@@ -662,7 +662,7 @@ static void drawCDKEntryField (CDKENTRY *entry)
    int x = 0;
 
    /* Draw in the filler characters. */
-   mvwhline (entry->fieldWin, 0, x, entry->filler, entry->fieldWidth);
+   (void)mvwhline (entry->fieldWin, 0, x, entry->filler, entry->fieldWidth);
 
    /* If there is information in the field. Then draw it in. */
    if (entry->info != 0)
@@ -674,15 +674,15 @@ static void drawCDKEntryField (CDKENTRY *entry)
       {
 	 for (x = entry->leftChar; x < infoLength; x++)
 	 {
-	    mvwaddch (entry->fieldWin, 0, x - entry->leftChar, entry->hidden);
+	    (void)mvwaddch (entry->fieldWin, 0, x - entry->leftChar, entry->hidden);
 	 }
       }
       else
       {
 	 for (x = entry->leftChar; x < infoLength; x++)
 	 {
-	    mvwaddch (entry->fieldWin, 0, x - entry->leftChar,
-		      CharOf (entry->info[x]) | entry->fieldAttr);
+	    (void)mvwaddch (entry->fieldWin, 0, x - entry->leftChar,
+			    CharOf (entry->info[x]) | entry->fieldAttr);
 	 }
       }
       wmove (entry->fieldWin, 0, entry->screenCol);
@@ -738,7 +738,7 @@ static void _destroyCDKEntry (CDKOBJS *object)
  * This sets specific attributes of the entry field.
  */
 void setCDKEntry (CDKENTRY *entry,
-		  char *value,
+		  const char *value,
 		  int min,
 		  int max,
 		  boolean Box GCC_UNUSED)
@@ -752,7 +752,7 @@ void setCDKEntry (CDKENTRY *entry,
  * This removes the old information in the entry field and keeps the
  * new information given.
  */
-void setCDKEntryValue (CDKENTRY *entry, char *newValue)
+void setCDKEntryValue (CDKENTRY *entry, const char *newValue)
 {
    int copychars = 0;
 

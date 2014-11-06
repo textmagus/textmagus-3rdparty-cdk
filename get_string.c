@@ -2,28 +2,32 @@
 
 /*
  * $Author: tom $
- * $Date: 2003/11/27 22:13:28 $
- * $Revision: 1.1 $
+ * $Date: 2013/06/16 15:07:05 $
+ * $Revision: 1.3 $
  */
 
 /*
  * This gets information from a user.
  */
-char *getString (CDKSCREEN *screen, char *title, char *label, char *initValue)
+char *getString (CDKSCREEN *screen,
+		 const char *title,
+		 const char *label,
+		 const char *initValue)
 {
-   CDKENTRY *widget	= 0;
-   char *value		= 0;
+   /* *INDENT-EQLS* */
+   CDKENTRY *widget     = 0;
+   char *value          = 0;
 
    /* Create the widget. */
    widget = newCDKEntry (screen, CENTER, CENTER, title, label,
-				A_NORMAL, '.', vMIXED, 40, 0,
-				5000, TRUE, FALSE);
+			 A_NORMAL, '.', vMIXED, 40, 0,
+			 5000, TRUE, FALSE);
 
    /* Set the default value. */
    setCDKEntryValue (widget, initValue);
 
    /* Get the string. */
-   value = activateCDKEntry (widget, 0);
+   (void)activateCDKEntry (widget, 0);
 
    /* Make sure they exited normally. */
    if (widget->exitType != vNORMAL)

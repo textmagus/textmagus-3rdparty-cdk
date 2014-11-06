@@ -2,8 +2,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2011/05/15 19:31:39 $
- * $Revision: 1.87 $
+ * $Date: 2014/11/06 10:06:46 $
+ * $Revision: 1.91 $
  */
 
 DeclareCDKObjects (LABEL, Label, setCdk, Unknown);
@@ -14,7 +14,7 @@ DeclareCDKObjects (LABEL, Label, setCdk, Unknown);
 CDKLABEL *newCDKLabel (CDKSCREEN *cdkscreen,
 		       int xplace,
 		       int yplace,
-		       char **mesg,
+		       CDK_CSTRING2 mesg,
 		       int rows,
 		       boolean Box,
 		       boolean shadow)
@@ -116,7 +116,7 @@ void activateCDKLabel (CDKLABEL *label, chtype *actions GCC_UNUSED)
 /*
  * This sets multiple attributes of the widget.
  */
-void setCDKLabel (CDKLABEL *label, char **mesg, int lines, boolean Box)
+void setCDKLabel (CDKLABEL *label, CDK_CSTRING2 mesg, int lines, boolean Box)
 {
    setCDKLabelMessage (label, mesg, lines);
    setCDKLabelBox (label, Box);
@@ -125,18 +125,25 @@ void setCDKLabel (CDKLABEL *label, char **mesg, int lines, boolean Box)
 /*
  * This sets the information within the label.
  */
-void setCDKLabelMessage (CDKLABEL *label, char **info, int infoSize)
+void setCDKLabelMessage (CDKLABEL *label, CDK_CSTRING2 info, int infoSize)
 {
    int x;
+   int limit;
 
    /* Clean out the old message. */
    for (x = 0; x < label->rows; x++)
    {
       freeChtype (label->info[x]);
+      label->info[x] = 0;
       label->infoPos[x] = 0;
       label->infoLen[x] = 0;
    }
-   label->rows = (infoSize < label->rows ? infoSize : label->rows);
+
+   /* update the label's length - but taking into account its window size */
+   limit = label->boxHeight - (2 * BorderOf (label));
+   if (infoSize > limit)
+      infoSize = limit;
+   label->rows = infoSize;
 
    /* Copy in the new message. */
    for (x = 0; x < label->rows; x++)

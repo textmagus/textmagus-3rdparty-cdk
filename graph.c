@@ -2,8 +2,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2010/11/08 01:24:10 $
- * $Revision: 1.83 $
+ * $Date: 2013/06/16 15:05:27 $
+ * $Revision: 1.86 $
  */
 
 DeclareCDKObjects (GRAPH, Graph, setCdk, Unknown);
@@ -18,16 +18,16 @@ CDKGRAPH *newCDKGraph (CDKSCREEN *cdkscreen,
 		       int yplace,
 		       int height,
 		       int width,
-		       char *title,
-		       char *xtitle,
-		       char *ytitle)
+		       const char *title,
+		       const char *xtitle,
+		       const char *ytitle)
 {
    /* *INDENT-EQLS* */
    CDKGRAPH *widget     = 0;
    int parentWidth      = getmaxx (cdkscreen->window);
    int parentHeight     = getmaxy (cdkscreen->window);
-   int boxWidth         = width;
-   int boxHeight        = height;
+   int boxWidth;
+   int boxHeight;
    int xpos             = xplace;
    int ypos             = yplace;
 
@@ -120,7 +120,7 @@ void activateCDKGraph (CDKGRAPH *widget, chtype *actions GCC_UNUSED)
 int setCDKGraph (CDKGRAPH *widget,
 		 int *values,
 		 int count,
-		 char *graphChar,
+		 const char *graphChar,
 		 boolean startAtZero,
 		 EGraphDisplayType displayType)
 {
@@ -237,7 +237,7 @@ int getCDKGraphValue (CDKGRAPH *widget, int Index)
 /*
  * Set the characters of the graph widget.
  */
-int setCDKGraphCharacters (CDKGRAPH *widget, char *characters)
+int setCDKGraphCharacters (CDKGRAPH *widget, const char *characters)
 {
    chtype *newTokens = 0;
    int charCount, junk;
@@ -262,7 +262,7 @@ chtype *getCDKGraphCharacters (CDKGRAPH *widget)
 /*
  * Set the character of the graph widget of the given index.
  */
-int setCDKGraphCharacter (CDKGRAPH *widget, int Index, char *character)
+int setCDKGraphCharacter (CDKGRAPH *widget, int Index, const char *character)
 {
    chtype *newTokens = 0;
    int charCount, junk;
@@ -506,14 +506,17 @@ static void _drawCDKGraph (CDKOBJS *object, boolean Box)
    {
       int colheight = (widget->values[y] / widget->xscale) - 1;
       /* Add the marker on the Y axis. */
-      mvwaddch (widget->win, widget->boxHeight - 3, (y + 1) * spacing + adj, ACS_TTEE);
+      (void)mvwaddch (widget->win,
+		      widget->boxHeight - 3,
+		      (y + 1) * spacing + adj,
+		      ACS_TTEE);
 
       /* If this is a plot graph, all we do is draw a dot. */
       if (widget->displayType == vPLOT)
       {
 	 xpos = widget->boxHeight - 4 - colheight;
 	 ypos = (y + 1) * spacing + adj;
-	 mvwaddch (widget->win, xpos, ypos, widget->graphChar[y]);
+	 (void)mvwaddch (widget->win, xpos, ypos, widget->graphChar[y]);
       }
       else
       {
@@ -532,9 +535,9 @@ static void _drawCDKGraph (CDKOBJS *object, boolean Box)
    }
 
    /* Draw in the axis corners. */
-   mvwaddch (widget->win, TitleLinesOf (widget), 2, ACS_URCORNER);
-   mvwaddch (widget->win, widget->boxHeight - 3, 2, ACS_LLCORNER);
-   mvwaddch (widget->win, widget->boxHeight - 3, widget->boxWidth, ACS_URCORNER);
+   (void)mvwaddch (widget->win, TitleLinesOf (widget), 2, ACS_URCORNER);
+   (void)mvwaddch (widget->win, widget->boxHeight - 3, 2, ACS_LLCORNER);
+   (void)mvwaddch (widget->win, widget->boxHeight - 3, widget->boxWidth, ACS_URCORNER);
 
    /* Refresh and lets see 'er. */
    wrefresh (widget->win);

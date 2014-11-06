@@ -1,5 +1,5 @@
 /*
- * $Id: selection.h,v 1.26 2005/12/28 21:45:16 tom Exp $
+ * $Id: selection.h,v 1.28 2013/09/01 18:06:41 tom Exp $
  */
 
 #ifndef CDKINCLUDES
@@ -20,7 +20,7 @@ extern "C" {
 #endif
 
 /*
- * Changes 1999-2003,2005 copyright Thomas E. Dickey
+ * Changes 1999-2012,2013 copyright Thomas E. Dickey
  *
  * Copyright 1999, Mike Glover
  * All rights reserved.
@@ -63,42 +63,14 @@ extern "C" {
  * Define the CDK selection widget structure.
  */
 struct SSelection {
-   CDKOBJS	obj;
-   WINDOW *	parent;
-   WINDOW *	win;
-   WINDOW *	scrollbarWin;
-   WINDOW *	shadowWin;
-   int		titleAdj;	/* unused */
-   chtype **	item;
-   int *	itemLen;
-   int *	itemPos;
+   /* This field must stay on top */
+   SCROLLER_FIELDS;
+
    chtype **	choice;
    int *	choicelen;
    int		choiceCount;
-   int		maxchoicelen;
    int *	selections;
    int *	mode;
-   int		maxTopItem;
-   int		maxLeftChar;
-   int		leftChar;
-
-   int		lastItem;
-   int		currentTop;
-   int		currentHigh;
-   int		currentItem;
-   int		listSize;
-   int		scrollbarPlacement;
-   boolean	scrollbar;
-   int		toggleSize;
-   int		togglePos;
-   float	step;
-
-   int		boxWidth;
-   int		boxHeight;
-   int		viewSize;
-   EExitType	exitType;
-   boolean	shadow;
-   chtype	highlight;
 };
 typedef struct SSelection CDKSELECTION;
 
@@ -112,10 +84,10 @@ CDKSELECTION *newCDKSelection (
 		int		/* spos */,
 		int		/* height */,
 		int		/* width */,
-		char *		/* title */,
-		char **		/* list */,
+		const char *	/* title */,
+		CDK_CSTRING2	/* list */,
 		int		/* listSize */,
-		char **		/* choices */,
+		CDK_CSTRING2	/* choices */,
 		int		/* choiceSize */,
 		chtype		/* highlight */,
 		boolean		/* Box */,
@@ -172,7 +144,7 @@ void setCDKSelection (
  */
 void setCDKSelectionItems (
 		CDKSELECTION *	/* selection */,
-		char **		/* list */,
+		CDK_CSTRING2	/* list */,
 		int		/* listSize */);
 
 int getCDKSelectionItems (
@@ -184,7 +156,7 @@ int getCDKSelectionItems (
  */
 void setCDKSelectionTitle (
 		CDKSELECTION *	/* selection */,
-		char *		/* title */);
+		const char *	/* title */);
 
 char *getCDKSelectionTitle (
 		CDKSELECTION *	/* selection */);

@@ -2,8 +2,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2011/05/15 20:01:03 $
- * $Revision: 1.191 $
+ * $Date: 2013/06/16 13:17:18 $
+ * $Revision: 1.193 $
  */
 
 /*
@@ -44,9 +44,9 @@ CDKMATRIX *newCDKMatrix (CDKSCREEN *cdkscreen,
 			 int cols,
 			 int vrows,
 			 int vcols,
-			 char *title,
-			 char **rowtitles,
-			 char **coltitles,
+			 const char *title,
+			 CDK_CSTRING2 rowtitles,
+			 CDK_CSTRING2 coltitles,
 			 int *colwidths,
 			 int *colvalues,
 			 int rspace,
@@ -83,8 +83,6 @@ CDKMATRIX *newCDKMatrix (CDKSCREEN *cdkscreen,
       { CDK_BACKCHAR,	KEY_PPAGE },
    };
    /* *INDENT-ON* */
-
-
 
    if ((matrix = newCDKObject (CDKMATRIX, &my_funcs)) == 0)
    {
@@ -131,7 +129,7 @@ CDKMATRIX *newCDKMatrix (CDKSCREEN *cdkscreen,
     * Count the number of lines in the title (see setCdkTitle).
     */
    temp = CDKsplitString (title, '\n');
-   TitleLinesOf (matrix) = (int)CDKcountStrings (temp);
+   TitleLinesOf (matrix) = (int)CDKcountStrings ((CDK_CSTRING2) temp);
    CDKfreeStrings (temp);
 
    /* Determine the height of the box. */
@@ -486,8 +484,8 @@ static int _injectCDKMatrix (CDKOBJS *object, chtype input)
 	    else
 	    {
 	       charcount--;
-	       mvwdelch (CurMatrixCell (widget), 1, charcount + 1);
-	       mvwinsch (CurMatrixCell (widget), 1, charcount + 1, widget->filler);
+	       (void)mvwdelch (CurMatrixCell (widget), 1, charcount + 1);
+	       (void)mvwinsch (CurMatrixCell (widget), 1, charcount + 1, widget->filler);
 	       wrefresh (CurMatrixCell (widget));
 	       MATRIX_INFO (widget, widget->row, widget->col)[charcount] = '\0';
 	    }
@@ -959,7 +957,7 @@ static void highlightCDKMatrixCell (CDKMATRIX *matrix)
 					  matrix->col)[x - 1])
 		   : matrix->filler);
 
-      mvwaddch (CurMatrixCell (matrix), 1, x, ch | highlight);
+      (void)mvwaddch (CurMatrixCell (matrix), 1, x, ch | highlight);
    }
    wmove (CurMatrixCell (matrix), 1, infolen + 1);
    wrefresh (CurMatrixCell (matrix));
@@ -1064,7 +1062,7 @@ static void drawCDKMatrixCell (CDKMATRIX *matrix,
 		   ? (CharOf (MATRIX_INFO (matrix, vrow, vcol)[x - 1]) | highlight)
 		   : matrix->filler);
 
-      mvwaddch (cell, 1, x, ch | highlight);
+      (void)mvwaddch (cell, 1, x, ch | highlight);
    }
    wmove (cell, 1, infolen + 1);
    wrefresh (cell);
@@ -1490,7 +1488,7 @@ void setCDKMatrixCB (CDKMATRIX *widget, MATRIXCB callback)
  * This function sets the values of the matrix widget.
  */
 void setCDKMatrixCells (CDKMATRIX *matrix,
-			char **info,
+			CDK_CSTRING2 info,
 			int rows,
 			int maxcols,
 			int *subSize)
@@ -1508,7 +1506,7 @@ void setCDKMatrixCells (CDKMATRIX *matrix,
       {
 	 if (x <= rows && y <= subSize[x])
 	 {
-	    char *source = info[(x * maxcols) + y];
+	    const char *source = info[(x * maxcols) + y];
 
 	    /* Copy in the new information. */
 	    if (source != 0)
@@ -1783,7 +1781,7 @@ static void redrawTitles (CDKMATRIX *matrix, int rowTitles, int colTitles)
 /*
  * This sets the value of a matrix cell.
  */
-int setCDKMatrixCell (CDKMATRIX *matrix, int row, int col, char *value)
+int setCDKMatrixCell (CDKMATRIX *matrix, int row, int col, const char *value)
 {
    /* Make sure the row/col combination is within the matrix. */
    if (row > matrix->rows || col > matrix->cols || row <= 0 || col <= 0)

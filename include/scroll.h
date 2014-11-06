@@ -1,5 +1,5 @@
 /*
- * $Id: scroll.h,v 1.30 2006/05/04 11:24:28 tom Exp $
+ * $Id: scroll.h,v 1.33 2013/09/01 18:06:41 tom Exp $
  */
 
 #ifndef CDKINCLUDES
@@ -19,8 +19,10 @@ extern "C" {
 #include <cdk_objs.h>
 #endif
 
+#include <scroller.h>
+
 /*
- * Changes 1999-2005,2006 copyright Thomas E. Dickey
+ * Changes 1999-2012,2013 copyright Thomas E. Dickey
  *
  * Copyright 1999, Mike Glover
  * All rights reserved.
@@ -64,39 +66,12 @@ extern "C" {
  * Declare scrolling list definitions.
  */
 struct SScroll {
-   CDKOBJS	obj;
-   WINDOW	*parent;
-   WINDOW	*win;
-   WINDOW	*scrollbarWin;
-   WINDOW       *listWin;
-   WINDOW	*shadowWin;
-   int		titleAdj;	/* unused */
-   chtype **	item;		/* */
-   int *	itemPos;	/* */
-   int *	itemLen;	/* */
-   int		maxTopItem;	/* */
-   int		maxLeftChar;	/* */
-   int		leftChar;	/* */
-   int		lastItem;	/* */
-   int		currentTop;	/* */
-   int		currentItem;	/* */
-   int		currentHigh;	/* */
-   int		listSize;	/* */
-   int		boxWidth;	/* */
-   int		boxHeight;	/* */
-   int		viewSize;	/* */
+   /* This field must stay on top */
+   SCROLLER_FIELDS;
 
-   int		scrollbarPlacement; /* UNUSED */
-   boolean	scrollbar;	/* UNUSED */
-   int		toggleSize;	/* size of scrollbar thumb/toggle */
-   int		togglePos;	/* position of scrollbar thumb/toggle */
-   float	step;		/* increment for scrollbar */
-
-   EExitType	exitType;	/* */
-   boolean	shadow;		/* */
    boolean	numbers;	/* */
    chtype	titlehighlight;	/* */
-   chtype	highlight;	/* */
+   WINDOW	*listWin;
 };
 typedef struct SScroll CDKSCROLL;
 
@@ -110,8 +85,8 @@ CDKSCROLL *newCDKScroll (
 		int		/* spos */,
 		int		/* height */,
 		int		/* width */,
-		char *		/* title */,
-		char **		/* itemList */,
+		const char *	/* title */,
+		CDK_CSTRING2	/* itemList */,
 		int		/* items */,
 		boolean		/* numbers */,
 		chtype		/* highlight */,
@@ -135,7 +110,7 @@ int activateCDKScroll (
  */
 void setCDKScroll (
 		CDKSCROLL *	/* scroll */,
-		char **		/* itemList */,
+		CDK_CSTRING2	/* itemList */,
 		int		/* items */,
 		boolean		/* numbers */,
 		chtype		/* highlight */,
@@ -171,7 +146,7 @@ void setCDKScrollCurrentItem(
  */
 void setCDKScrollItems (
 		CDKSCROLL *	/* scroll */,
-		char **		/* itemList */,
+		CDK_CSTRING2	/* itemList */,
 		int		/* items */,
 		boolean		/* numbers */);
 
@@ -226,14 +201,14 @@ boolean getCDKScrollBox (
  */
 void addCDKScrollItem (
 		CDKSCROLL *	/* scroll */,
-		char *		/* item */);
+		const char *	/* item */);
 
 /*
  * This adds a single item into the scrolling list.
  */
 void insertCDKScrollItem (
 		CDKSCROLL *	/* scroll */,
-		char *		/* item */);
+		const char *	/* item */);
 
 /*
  * This deletes a single item from the scrolling list.

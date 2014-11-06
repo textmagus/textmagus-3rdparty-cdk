@@ -2,8 +2,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2011/05/16 22:27:59 $
- * $Revision: 1.135 $
+ * $Date: 2014/11/05 10:06:58 $
+ * $Revision: 1.139 $
  */
 
 /*
@@ -23,10 +23,10 @@ DeclareCDKObjects (TEMPLATE, Template, setCdk, String);
 CDKTEMPLATE *newCDKTemplate (CDKSCREEN *cdkscreen,
 			     int xplace,
 			     int yplace,
-			     char *title,
-			     char *label,
-			     char *plate,
-			     char *Overlay,
+			     const char *title,
+			     const char *label,
+			     const char *plate,
+			     const char *Overlay,
 			     boolean Box,
 			     boolean shadow)
 {
@@ -462,7 +462,7 @@ static void CDKTemplateCallBack (CDKTEMPLATE *cdktemplate, chtype input)
    }
    else
    {
-      char *test = malloc (have + 2);
+      char *test = (char *)malloc (have + 2);
 
       if (test != 0)
       {
@@ -570,7 +570,7 @@ char *mixCDKTemplate (CDKTEMPLATE *cdktemplate)
 /*
  * Return the field-info from the mixed string.
  */
-char *unmixCDKTemplate (CDKTEMPLATE *cdktemplate, char *info)
+char *unmixCDKTemplate (CDKTEMPLATE *cdktemplate, const char *info)
 {
    /* *INDENT-EQLS* */
    int x                = 0;
@@ -700,29 +700,29 @@ static void drawCDKTemplateField (CDKTEMPLATE *cdktemplate)
 		   cdktemplate->overlay,
 		   HORIZONTAL, 0,
 		   cdktemplate->overlayLen);
-   }
 
-   /* Adjust the cursor. */
-   if (infolen != 0)
-   {
-      int pos = 0;
-      for (x = 0; x < cdktemplate->fieldWidth; x++)
+      /* Adjust the cursor. */
+      if (infolen != 0)
       {
-	 if (isPlateChar (cdktemplate->plate[x]) && pos < infolen)
+	 int pos = 0;
+	 for (x = 0; x < cdktemplate->fieldWidth; x++)
 	 {
-	    fieldColor = cdktemplate->overlay[x] & A_ATTRIBUTES;
-	    mvwaddch (cdktemplate->fieldWin,
-		      0, x,
-		      CharOf (cdktemplate->info[pos++]) | fieldColor);
+	    if (isPlateChar (cdktemplate->plate[x]) && pos < infolen)
+	    {
+	       fieldColor = cdktemplate->overlay[x] & A_ATTRIBUTES;
+	       (void)mvwaddch (cdktemplate->fieldWin,
+			       0, x,
+			       CharOf (cdktemplate->info[pos++]) | fieldColor);
+	    }
 	 }
+	 wmove (cdktemplate->fieldWin, 0, cdktemplate->screenPos);
       }
-      wmove (cdktemplate->fieldWin, 0, cdktemplate->screenPos);
+      else
+      {
+	 adjustCDKTemplateCursor (cdktemplate, +1);
+      }
+      wrefresh (cdktemplate->fieldWin);
    }
-   else
-   {
-      adjustCDKTemplateCursor (cdktemplate, +1);
-   }
-   wrefresh (cdktemplate->fieldWin);
 }
 
 /*
@@ -805,7 +805,7 @@ static void _eraseCDKTemplate (CDKOBJS *object)
 /*
  * Set the value given to the cdktemplate.
  */
-void setCDKTemplate (CDKTEMPLATE *cdktemplate, char *newValue, boolean Box)
+void setCDKTemplate (CDKTEMPLATE *cdktemplate, const char *newValue, boolean Box)
 {
    setCDKTemplateValue (cdktemplate, newValue);
    setCDKTemplateBox (cdktemplate, Box);
@@ -814,7 +814,7 @@ void setCDKTemplate (CDKTEMPLATE *cdktemplate, char *newValue, boolean Box)
 /*
  * Set the value given to the cdktemplate.
  */
-void setCDKTemplateValue (CDKTEMPLATE *cdktemplate, char *newValue)
+void setCDKTemplateValue (CDKTEMPLATE *cdktemplate, const char *newValue)
 {
    /* *INDENT-EQLS* */
    int len              = 0;

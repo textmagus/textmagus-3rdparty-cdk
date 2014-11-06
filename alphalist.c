@@ -2,8 +2,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2011/05/15 19:11:12 $
- * $Revision: 1.105 $
+ * $Date: 2014/01/19 01:58:00 $
+ * $Revision: 1.110 $
  */
 
 /*
@@ -12,7 +12,7 @@
 static BINDFN_PROTO (adjustAlphalistCB);
 static BINDFN_PROTO (completeWordCB);
 static int preProcessEntryField (EObjectType, void *, void *, chtype);
-static int createList (CDKALPHALIST *alphalist, char **list, int listSize);
+static int createList (CDKALPHALIST *alphalist, CDK_CSTRING *list, int listSize);
 
 DeclareSetXXchar (static, _setMy);
 DeclareCDKObjects (ALPHALIST, Alphalist, _setMy, String);
@@ -25,9 +25,9 @@ CDKALPHALIST *newCDKAlphalist (CDKSCREEN *cdkscreen,
 			       int yplace,
 			       int height,
 			       int width,
-			       char *title,
-			       char *label,
-			       char **list,
+			       const char *title,
+			       const char *label,
+			       CDK_CSTRING *list,
 			       int listSize,
 			       chtype fillerChar,
 			       chtype highlight,
@@ -39,8 +39,8 @@ CDKALPHALIST *newCDKAlphalist (CDKSCREEN *cdkscreen,
    chtype *chtypeLabel          = 0;
    int parentWidth              = getmaxx (cdkscreen->window);
    int parentHeight             = getmaxy (cdkscreen->window);
-   int boxWidth                 = width;
-   int boxHeight                = height;
+   int boxWidth;
+   int boxHeight;
    int xpos                     = xplace;
    int ypos                     = yplace;
    int tempWidth                = 0;
@@ -178,7 +178,7 @@ CDKALPHALIST *newCDKAlphalist (CDKSCREEN *cdkscreen,
 					  RIGHT,
 					  boxHeight - tempHeight,
 					  tempWidth,
-					  0, list, listSize,
+					  0, (CDK_CSTRING2)list, listSize,
 					  NONUMBERS, A_REVERSE,
 					  Box, FALSE);
    setCDKScrollULChar (alphalist->scrollField, ACS_LTEE);
@@ -290,7 +290,7 @@ static void drawMyScroller (CDKALPHALIST *widget)
 static void injectMyScroller (CDKALPHALIST *widget, chtype key)
 {
    SaveFocus (widget);
-   injectCDKScroll (widget->scrollField, key);
+   (void)injectCDKScroll (widget->scrollField, key);
    RestoreFocus (widget);
 }
 
@@ -367,7 +367,7 @@ static int _injectCDKAlphalist (CDKOBJS *object, chtype input)
  * This sets multiple attributes of the widget.
  */
 void setCDKAlphalist (CDKALPHALIST *alphalist,
-		      char **list,
+		      CDK_CSTRING *list,
 		      int listSize,
 		      chtype fillerChar,
 		      chtype highlight,
@@ -382,7 +382,7 @@ void setCDKAlphalist (CDKALPHALIST *alphalist,
 /*
  * This function sets the information inside the file selector.
  */
-void setCDKAlphalistContents (CDKALPHALIST *widget, char **list, int listSize)
+void setCDKAlphalistContents (CDKALPHALIST *widget, CDK_CSTRING *list, int listSize)
 {
    CDKSCROLL *scrollp = widget->scrollField;
    CDKENTRY *entry = widget->entryField;
@@ -392,7 +392,7 @@ void setCDKAlphalistContents (CDKALPHALIST *widget, char **list, int listSize)
 
    /* Set the information in the scrolling list. */
    setCDKScroll (scrollp,
-		 widget->list,
+		 (CDK_CSTRING2)widget->list,
 		 widget->listSize,
 		 NONUMBERS,
 		 scrollp->highlight,
@@ -655,7 +655,7 @@ static int preProcessEntryField (EObjectType cdktype GCC_UNUSED, void
    {
       int Index, difference, absoluteDifference, x;
       int currPos = (entry->screenCol + entry->leftChar);
-      char *pattern = malloc ((size_t) infoLen + 2);
+      char *pattern = (char *)malloc ((size_t) infoLen + 2);
 
       if (pattern != 0)
       {
@@ -683,7 +683,7 @@ static int preProcessEntryField (EObjectType cdktype GCC_UNUSED, void
       {
 	 empty = TRUE;
       }
-      else if ((Index = searchList (alphalist->list,
+      else if ((Index = searchList ((CDK_CSTRING2)alphalist->list,
 				    alphalist->listSize,
 				    pattern)) >= 0)
       {
@@ -770,7 +770,7 @@ static int completeWordCB (EObjectType objectType GCC_UNUSED, void *object GCC_U
    }
 
    /* Look for a unique word match. */
-   Index = searchList (alphalist->list, alphalist->listSize, entry->info);
+   Index = searchList ((CDK_CSTRING2)alphalist->list, alphalist->listSize, entry->info);
 
    /* If the index is less than zero, return we didn't find a match. */
    if (Index < 0)
@@ -794,9 +794,6 @@ static int completeWordCB (EObjectType objectType GCC_UNUSED, void *object GCC_U
       /* *INDENT-EQLS* */
       currentIndex = Index;
       altCount     = 0;
-      height       = 0;
-      match        = 0;
-      selected     = -1;
 
       /* Start looking for alternate words. */
       /* FIXME: bsearch would be more suitable */
@@ -818,8 +815,8 @@ static int completeWordCB (EObjectType objectType GCC_UNUSED, void *object GCC_U
       scrollp = newCDKScroll (entry->obj.screen,
 			      CENTER, CENTER, RIGHT, height, -30,
 			      "<C></B/5>Possible Matches.",
-			      altWords, altCount, NUMBERS,
-			      A_REVERSE, TRUE, FALSE);
+			      (CDK_CSTRING2)altWords, altCount,
+			      NUMBERS, A_REVERSE, TRUE, FALSE);
 
       /* Allow them to select a close match. */
       match = activateCDKScroll (scrollp, 0);
@@ -877,7 +874,7 @@ static int completeWordCB (EObjectType objectType GCC_UNUSED, void *object GCC_U
    return (TRUE);
 }
 
-static int createList (CDKALPHALIST *alphalist, char **list, int listSize)
+static int createList (CDKALPHALIST *alphalist, CDK_CSTRING *list, int listSize)
 {
    int status = 0;
 

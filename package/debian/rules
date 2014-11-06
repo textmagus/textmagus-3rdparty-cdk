@@ -13,13 +13,13 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 # packages
 PACKAGES.indep = libcdk5-doc
-PACKAGES.arch  = libcdk5-dev libcdkw5-dev libcdk5 libcdkw5
+PACKAGES.arch  = libcdk5-dev libcdk5
 
 CFLAGS =
 
 TARGET = $(CURDIR)/debian
-P_NORM = $(CURDIR)/t/libcdk5
-P_WIDE = $(CURDIR)/t/libcdkw5
+P_SHARED = $(CURDIR)/t/shared
+P_STATIC = $(CURDIR)/t/static
 
 verbose = # -v
 
@@ -31,6 +31,8 @@ configure = ../../configure \
 		--build=$(DEB_BUILD_GNU_TYPE) \
 		--prefix=/usr \
 		--mandir=\$${prefix}/share/man \
+		--with-ncursesw \
+		--with-libname=cdk \
 		--disable-rpath-hack
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
@@ -108,11 +110,17 @@ config-libcdk5-stamp       :
 	$(LOG) "configuring libcdk5"
 	dh_testdir
 
-	rm -rf $(P_NORM)
-	mkdir -p $(P_NORM)
+	rm -rf $(P_SHARED)
+	mkdir -p $(P_SHARED)
 
-	cd $(P_NORM); CFLAGS="$(CFLAGS)" \
-	$(configure) --with-ncurses
+	cd $(P_SHARED); CFLAGS="$(CFLAGS)" \
+	$(configure) --with-shared --with-versioned-syms
+
+	rm -rf $(P_STATIC)
+	mkdir -p $(P_STATIC)
+
+	cd $(P_STATIC); CFLAGS="$(CFLAGS)" \
+	$(configure)
 
 	touch $@
 
@@ -120,7 +128,8 @@ build-libcdk5-stamp        : config-libcdk5-stamp
 	$(LOG) "building libcdk5"
 	dh_testdir
 
-	$(MAKE) -C $(P_NORM) cdklib cdkshlib
+	$(MAKE) -C $(P_SHARED) all
+	$(MAKE) -C $(P_STATIC) all
 
 	touch $@
 
@@ -131,7 +140,10 @@ install-libcdk5-stamp      : build-libcdk5-stamp
 	dh_prep $(verbose) -plibcdk5
 	dh_installdirs $(verbose) -plibcdk5
 
-	$(MAKE) -C $(P_NORM) DESTDIR=$(TARGET)/libcdk5 installCDKSHLibrary
+	$(MAKE) -C $(P_SHARED) DESTDIR=$(TARGET)/libcdk5 installCDKLibrary
+
+	# remove -config file also in -dev package
+	rm -rf $(TARGET)/libcdk5/usr/bin
 
 	touch $@
 
@@ -149,7 +161,12 @@ install-libcdk5-dev-stamp  : install-libcdk5-stamp
 	dh_prep $(verbose) -plibcdk5-dev
 	dh_installdirs $(verbose) -plibcdk5-dev
 
-	$(MAKE) -C $(P_NORM) DESTDIR=$(TARGET)/libcdk5-dev installCDKHeaderFiles installCDKLibrary
+	$(MAKE) -C $(P_SHARED) DESTDIR=$(TARGET)/libcdk5-dev installCDKHeaderFiles
+	$(MAKE) -C $(P_STATIC) DESTDIR=$(TARGET)/libcdk5-dev install.libs
+
+	# get the symbolic link, but not the actual file
+	$(MAKE) -C $(P_SHARED) DESTDIR=$(TARGET)/libcdk5-dev install.libs
+	find $(TARGET)/libcdk5-dev/usr/lib -type f -name '*.so*' -exec rm -f {} \;
 
 	touch $@
 
@@ -167,59 +184,8 @@ install-libcdk5-doc-stamp  : install-libcdk5-stamp
 	dh_prep $(verbose) -plibcdk5-doc
 	dh_installdirs $(verbose) -plibcdk5-doc
 
-	$(MAKE) -C $(P_NORM) DESTDIR=$(TARGET)/libcdk5-doc installCDKManPages
+	$(MAKE) -C $(P_SHARED) DESTDIR=$(TARGET)/libcdk5-doc installCDKManPages
 	dh_installexamples $(verbose) -plibcdk5-doc examples demos
 
 	touch $@
 
-#------------------------------------------------------------------------------
-config-libcdkw5-stamp      :
-	$(LOG) "configuring libcdkw5"
-	dh_testdir
-
-	rm -rf $(P_WIDE)
-	mkdir -p $(P_WIDE)
-
-	cd $(P_WIDE); CFLAGS="$(CFLAGS)" \
-	$(configure) --with-ncursesw --with-hdrname=cdkw --with-cfgname=cdkw
-
-	touch $@
-
-build-libcdkw5-stamp       : config-libcdkw5-stamp
-	$(LOG) "building libcdkw5"
-	dh_testdir
-
-	$(MAKE) -C $(P_WIDE) cdklib cdkshlib
-
-	touch $@
-
-install-libcdkw5-stamp     : build-libcdkw5-stamp
-	$(LOG) "installing libcdkw5"
-	dh_testdir
-	dh_testroot
-	dh_prep $(verbose) -plibcdkw5
-	dh_installdirs $(verbose) -plibcdkw5
-
-	$(MAKE) -C $(P_WIDE) DESTDIR=$(TARGET)/libcdkw5 installCDKSHLibrary
-
-	touch $@
-
-#------------------------------------------------------------------------------
-config-libcdkw5-dev-stamp  : config-libcdkw5-stamp
-	touch $@
-
-build-libcdkw5-dev-stamp   : build-libcdkw5-stamp
-	touch $@
-
-install-libcdkw5-dev-stamp : install-libcdkw5-stamp
-	$(LOG) "installing libcdkw5-dev"
-	dh_testdir
-	dh_testroot
-	dh_prep $(verbose) -plibcdkw5-dev
-	dh_installdirs $(verbose) -plibcdkw5-dev
-
-	$(MAKE) -C $(P_WIDE) DESTDIR=$(TARGET)/libcdkw5-dev installCDKHeaderFiles installCDKLibrary
-
-	touch $@
-
-#------------------------------------------------------------------------------

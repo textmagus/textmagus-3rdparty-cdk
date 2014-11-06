@@ -1,14 +1,145 @@
--- vile:fk=8bit txtmode
--- $Id: CHANGES,v 1.172 2012/03/18 23:37:03 tom Exp $
+-- $Id: CHANGES,v 1.232 2014/11/06 10:10:35 tom Exp $
 -------------------------------------------------------------------------------
 Cdk Version Change List
 Copyright Mike Glover, 1995, 1996, 1997, 1998, 1999
-Modifications copyright Thomas E. Dickey 1999-2010, 2011
+Modifications copyright Thomas E. Dickey 1999-2013, 2014
 -------------------------------------------------------------------------------
 
 This file outlines all of the changes/additions from one release to another.
 Changes through 4.9.8 (December 1998) were recorded by Mike Glover.
 Thereafter, changes have been recorded by Thomas E. Dickey.
+
+2014/11/06
+	+ alter limit-check in setCDKLabelMessage to use the actual window size
+	  rather than the label-array's latest size (prompted by suggestion by
+	  Stuart Friedberg).
+	+ reset label pointer to 0 after freeing it during resizing in
+	  setCDKLabelMessage (report/analysis by Stuart Friedberg).
+	+ fix most Coverity warnings, aside from demos using getenv.
+	+ correct dependency of dpkg/mingw test packages; only "ncurses6" is
+	  used rather than "libncurses6".
+	+ change test-packages to use --with-shared rather than cdkshlib hack.
+	+ add configure options to implement symbol versioning/hiding:
+	  --with-versioned-syms=X markup versioned symbols using ld
+	  --with-export-syms=XXX  limit exported symbols using libtool
+	+ updated configure macros:
+	  + CF_ACVERSION_CHECK -
+	    + work around another gratuitous incompatibility introduced in 2.69
+	    (reported by Ross Burton, openembedded.org)
+	  + CF_ADD_CFLAGS - workaround for ash-shell with Minix 3.2
+	  + CF_ADD_LIBS -
+	    + workaround in CF_X_TOOLKIT uses pkgconfig, whose files generally
+	      are using incomplete dependencies - in turn introducing lots of
+	      duplication.  filter out the duplicates.
+	  + CF_CHECK_CFLAGS - workaround for ash-shell with Minix 3.2
+	  + CF_CURSES_FUNCS -
+	    + improve workaround for weak-linkage, seems to fix tests with
+	      NetBSD 6.1
+	  + CF_GETOPT_HEADER - 
+	    + add NEED_GETOPT_H definition, since that's the only interesting
+	      special case
+	  + CF_INTEL_COMPILER - 
+	    + cleanup the -no-gcc option which was leftover from testing - prcs
+	      does not build with this option.
+	  + CF_LIB_SUFFIX -
+	    + it is not necessary or even a good idea to make AIX's shared-library suffixes ".a" -- make it ".so" like everyone else (including the system's shared libraries).
+	  + CF_MAKEFLAGS -
+	    + workaround for GNU make 4.0 incompatibility with previous
+	      releases.
+	  + CF_X_ATHENA - add --with-Xaw3dxft option.
+	  + CF_XOPEN_SOURCE -
+	    + add case for UnixWare (report/discussion with Mark Ryan).
+	    + Minix3.2 ifdef's the POSIX.1-2001 functions inside
+	      _NETBSD_SOURCE, even though it was released 2012-02-29 - appease
+	      it.  At the same time, turn on the verbose flag to show that most
+	      platforms need platform-specific define's to get POSIX (sic).
+	    + for Solaris (tested with gcc/g++ 3.4.3 on Solaris 10 and gcc/g++
+	      4.5.2 on Solaris 11), suppress the followup check for defining
+	      _XOPEN_SOURCE because it is not needed, as well as because g++
+	      4.7.3 (no package, used in Sage for Solaris 10) has some
+	      unspecified header breakage which is triggered by the duplicate
+	      definition.
+	  + CF_X_TOOLKIT -
+	    + add workaround for breakage in XQuartz upgrades. 
+	    + add 3rd parameter to AC_DEFINE for autoheader.
+	+ modify spec-file to work with OpenSUSE's customization of
+	  _defaultdocdir, which puts documentation for most packages in
+	  /usr/share/doc/packages/
+	+ update config.guess, config.sub
+
+2014/01/18
+	+ fix memory leak in allocListArrays() in scroll.c (patch by Alexander
+	  Gozman).
+	+ amend changes for alphalist in 2012/03/23, to make its "list"
+	  parameter read/write so that the caller's copy can be sorted as
+	  before.
+	+ add man/man2html.ignore, used when generating
+	  http://invisible-island.net/cdk/manpage/
+
+2014/01/01
+	+ improve limit-checks in trimCDKWindow() (patch by Tyson Nottingham).
+	+ updated configure script (further improvments for shared libraries,
+	  and clang).
+	+ update config.guess
+
+2013/11/17
+	+ fix dependencies of Debian MinGW packages.
+
+2013/11/07
+	+ add scripts for testing cross-compiles to MinGW.
+	+ add new scroller.h to CDKHDR variable in Makefile.in, so it will be
+	  installed (report by Aitor Atuin).
+	+ updated configure script (further improvments for shared libraries,
+	  and MinGW).
+	+ update config.guess, config.sub
+
+2013/09/01
+	+ add a limit-check in drawCDKSwindowList() (patch by Wang Weber).
+	+ refactor scrolling support from radio.c, scroll.c, selection.c as new
+	  file scroll.c, making functions from macros which were in cdk_int.h.
+	  This change also modifies header files to move common fields to a new
+	  SCROLLER_FIELDS macro - this is a source-compatible change, but not
+	  binary-compatible (patch by Corentin Delorme).
+	+ add FreeBSD port-files, for test-builds.
+	+ add --enable-rpath and --disable-rpath-hack options to configure
+	  script.
+	+ deprecate the cdkshlib makefile target; it is not available if either
+	  --with-libtool or --with-shared is given.
+	+ corrected Makefile.in permissions of cdk5-config script, which was
+	  not executable; this did not affect packages (cf: 2011/05/17).
+	+ enable the configure --disable-libtool-version option by defining
+	  LIBTOOL_VERSION in Makefile.in, so that the soname can be set or left
+	  to libtool to manage.
+	+ add configure options for manipulating linker rpath feature.
+	+ improve configure options for curses variants by reusing macro
+	  from ncurses-examples
+	+ add lint rule to makefiles
+	+ fix warnings from clang
+	+ adapt configure --with-shared option from ncurses.
+	+ updated configure script (mostly minor changes for autoheader).
+	+ update config.guess, config.sub
+
+2012/03/23
+	+ use gmtime instead of localtime in a few places so that calendar
+	  results are not offset by the hour of the day (report/analysis by
+	  Alex Charis).
+	+ add configure option --enable-const, which defines, like
+	  NCURSES_CONST, the symbol CDK_CONST which can be used to address
+	  improved const checking while preserving source-compatibility.
+	+ revise copyChtypeList to correspond with copyCharList
+	+ use const in cdk_util function prototypes, similar "string" uses
+	  to improve writable-strings warnings.  Arrays of strings are not
+	  addressed due to compatibility.
+	+ change document directory to /usr/share/doc
+	+ add configure --enable-hdr-subdir to control whether cdk.h should
+	  be in /usr/include/cdk for example, or in /usr/include.  Make the
+	  default the latter, standard layout.
+	+ simplify dpkg script, provide only one library using ncursesw
+	+ updated configure script macros, many changes for portability.
+	+ add cdk_test.h to installed headers (Debian #500161).  Resolution
+	  of that bug report by the way did not actually install the requested
+	  header file.
+	+ update config.guess, config.sub
 
 2012/03/18
 	+ provide shlibs file in dpkg scripts.
@@ -142,7 +273,7 @@ Thereafter, changes have been recorded by Thomas E. Dickey.
 	+ add some redundant pointer checks, e.g., to entry.c, to avoid core
 	  dump if one tries building Cdk with NetBSD curses (see lib/32417).
 	+ split up traverseCDKScreen() to allow customized flavors of that to
-	  be written in a calling application using the pieces: 
+	  be written in a calling application using the pieces:
 	  traverseCDKOnce(), setCDKFocusFirst() (request by Jorgen Lundman).
 	+ restore assignment of selectedItem in setCDKRadioCurrentItem() which
 	  was dropped in 2005/04/24 (report by Fu Steve X).
@@ -261,11 +392,11 @@ Thereafter, changes have been recorded by Thomas E. Dickey.
 	  for mapping the given object to the bindable object, e.g., the entry
 	  widget for alphalist and fselect composite widgets.  In particular,
 	  checkCDKObjectBind() and getcCDKObject() did not use the same binding
-	  data. 
+	  data.
 	+ correct initialization of traverseCDKScreen(), which required two
 	  tab keypresses to make the first traversal (report by Fu Steve X).
 	+ updated configure script checks for _XOPEN_SOURCE, etc.
-	+ updated config.guess and config.sub
+	+ update config.guess and config.sub
 	+ correct prototype shown in manpage for setCDKScroll() (report by
 	  Stefan Heimann).
 	+ correct equivalent expressions in setCDKRadioItems() and
@@ -294,7 +425,7 @@ Thereafter, changes have been recorded by Thomas E. Dickey.
 	+ simplify draw.c a little by using writeCharAttrib() and
 	  writeChtypeAttrib() to implement writeChar() and writeChtype().
 	+ revert 2002/07/27 change that used waddchnstr() in writeChtype(),
-	  since it does not render control characters (report by Mike Leib). 
+	  since it does not render control characters (report by Mike Leib).
 	+ fix an infinite loop in viewer.c when displaying control characters
 	  such as form-feed.
 
@@ -396,7 +527,7 @@ Thereafter, changes have been recorded by Thomas E. Dickey.
 	  CF_CHECK_CACHE, CF_GCC_WARNINGS, CF_NCURSES_LIBS, CF_PROG_EXT,
 	  CF_WITH_DBMALLOC, CF_WITH_DMALLOC, CF_WITH_LIBTOOL, CF_WITH_WARNINGS,
 	  CF_X_ATHENA, CF_X_TOOLKIT.
-	+ updated config.guess, config.sub
+	+ update config.guess, config.sub
 	> fixes for fselect.c by ewigg (Ed Wigg):
 	+ add a range check to ensure that filename completion at the end of
 	  the list does not reference past the end of the list.
@@ -424,7 +555,7 @@ Thereafter, changes have been recorded by Thomas E. Dickey.
 	    boundary at the end of the scroll bar.  Does not happen in ncurses.
 	  + On solaris curses, press 'G' will coredump.
 	    Does not happen in ncurses.
-	+ make wording in COPYING consistent with other fixes from 1999/05/15 
+	+ make wording in COPYING consistent with other fixes from 1999/05/15
 	  (report by Ahmad Attia).
 
 2003/12/10 - T.E.Dickey <dickey@his.com>
@@ -448,7 +579,7 @@ Thereafter, changes have been recorded by Thomas E. Dickey.
 	+ correct one of the attrbox() calls in drawCDKMatrixCell(), which used
 	  a left-tee where a right-tee was needed (report by William L Davis).
 	+ add setCDKMatrixCells(), redefining setCDKMatrix() as a macro to
-	  call it. 
+	  call it.
 	+ add cleanCDKMatrixCell().
 	+ correct position for right-aligned menus, which was off by one from
 	  2003/11/30 changes (report/patch by William L Davis).
@@ -477,7 +608,7 @@ Thereafter, changes have been recorded by Thomas E. Dickey.
 	+ eliminate static MAX_LINES limit from graph-widget values.
 	+ eliminate static MAX_LINES limit from widget titles.
 	+ updated configure script, improved checks for curses functions.
-	+ updated config.guess, config.sub
+	+ update config.guess, config.sub
 
 2003/11/24 - T.E.Dickey <dickey@his.com>
 ========================================
@@ -837,7 +968,7 @@ Thereafter, changes have been recorded by Thomas E. Dickey.
 	+ updates to configure script macros:
 	  CF_CURSES_FUNCS, CF_FIND_LIBRARY, CF_HEADER_PATH, CF_LIBRARY_PATH,
 	  CF_NCURSES_LIBS and CF_XOPEN_CURSES
-	+ updated config.guess, config.sub
+	+ update config.guess, config.sub
 
 2000/04/09 - T.E.Dickey <dickey@clark.net>
 ==========================================
@@ -1157,3 +1288,5 @@ ttfn,
 
 PS: There is also a Perl5 extension of this library for you Perl5 fans.
     Look under any CPAN site under the directory CPAN/authors/id/GLOVER.
+
+-- vile:fk=8bit txtmode

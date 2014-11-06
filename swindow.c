@@ -2,8 +2,8 @@
 
 /*
  * $Author: tom $
- * $Date: 2011/05/15 19:44:46 $
- * $Revision: 1.118 $
+ * $Date: 2014/01/02 01:03:04 $
+ * $Revision: 1.125 $
  */
 
 /*
@@ -22,7 +22,7 @@ CDKSWINDOW *newCDKSwindow (CDKSCREEN *cdkscreen,
 			   int yplace,
 			   int height,
 			   int width,
-			   char *title,
+			   const char *title,
 			   int saveLines,
 			   boolean Box,
 			   boolean shadow)
@@ -31,8 +31,8 @@ CDKSWINDOW *newCDKSwindow (CDKSCREEN *cdkscreen,
    CDKSWINDOW *swindow          = 0;
    int parentWidth              = getmaxx (cdkscreen->window);
    int parentHeight             = getmaxy (cdkscreen->window);
-   int boxWidth                 = width;
-   int boxHeight                = height;
+   int boxWidth;
+   int boxHeight;
    int xpos                     = xplace;
    int ypos                     = yplace;
    int x;
@@ -49,7 +49,6 @@ CDKSWINDOW *newCDKSwindow (CDKSCREEN *cdkscreen,
 	    { '$',		KEY_END },
    };
    /* *INDENT-ON* */
-
 
    if ((swindow = newCDKObject (CDKSWINDOW, &my_funcs)) == 0)
         return (0);
@@ -153,13 +152,13 @@ CDKSWINDOW *newCDKSwindow (CDKSCREEN *cdkscreen,
 /*
  * This sets the lines and the box attribute of the scrolling window.
  */
-void setCDKSwindow (CDKSWINDOW *swindow, char **list, int lines, boolean Box)
+void setCDKSwindow (CDKSWINDOW *swindow, CDK_CSTRING2 list, int lines, boolean Box)
 {
    setCDKSwindowContents (swindow, list, lines);
    setCDKSwindowBox (swindow, Box);
 }
 
-static void setupLine (CDKSWINDOW *swindow, char *list, int x)
+static void setupLine (CDKSWINDOW *swindow, const char *list, int x)
 {
    /* *INDENT-EQLS* */
    swindow->list[x]    = char2Chtype (list,
@@ -174,7 +173,7 @@ static void setupLine (CDKSWINDOW *swindow, char *list, int x)
 /*
  * This sets all the lines inside the scrolling window.
  */
-void setCDKSwindowContents (CDKSWINDOW *swindow, char **list, int listSize)
+void setCDKSwindowContents (CDKSWINDOW *swindow, CDK_CSTRING2 list, int listSize)
 {
    int x = 0;
 
@@ -227,7 +226,7 @@ static void freeLine (CDKSWINDOW *swindow, int x)
 /*
  * This adds a line to the scrolling window.
  */
-void addCDKSwindow (CDKSWINDOW *swindow, char *list, int insertPos)
+void addCDKSwindow (CDKSWINDOW *swindow, const char *list, int insertPos)
 {
    int x = 0;
 
@@ -244,7 +243,7 @@ void addCDKSwindow (CDKSWINDOW *swindow, char *list, int insertPos)
       for (x = 0; x < swindow->listSize; x++)
       {
 	 /* *INDENT-EQLS* */
-	 swindow->list[x]   = swindow->list[x + 1];
+	 swindow->list[x]  = swindow->list[x + 1];
 	 swindow->listPos[x] = swindow->listPos[x + 1];
 	 swindow->listLen[x] = swindow->listLen[x + 1];
       }
@@ -263,7 +262,7 @@ void addCDKSwindow (CDKSWINDOW *swindow, char *list, int insertPos)
       for (x = swindow->listSize; x > 0; x--)
       {
 	 /* *INDENT-EQLS* Copy in the new row. */
-	 swindow->list[x]   = swindow->list[x - 1];
+	 swindow->list[x]  = swindow->list[x - 1];
 	 swindow->listPos[x] = swindow->listPos[x - 1];
 	 swindow->listLen[x] = swindow->listLen[x - 1];
       }
@@ -385,7 +384,19 @@ void cleanCDKSwindow (CDKSWINDOW *swindow)
  */
 void trimCDKSwindow (CDKSWINDOW *swindow, int begin, int end)
 {
-   int start, finish, x;
+   int start, finish, lines, x;
+
+   /* 
+    * Do nothing if the list is empty, the interval is empty,
+    * or the entire interval lies outside of the list.
+    */
+   if ((swindow->listSize == 0) ||
+       (begin > end) ||
+       (begin < 0 && end < 0) ||
+       (begin >= swindow->listSize && end >= swindow->listSize))
+   {
+      return;
+   }
 
    /* Check the value of begin. */
    if (begin < 0)
@@ -415,30 +426,49 @@ void trimCDKSwindow (CDKSWINDOW *swindow, int begin, int end)
       finish = end;
    }
 
-   /* Make sure the start is lower than the end. */
-   if (start > finish)
-   {
-      return;
-   }
+   lines = finish - start + 1;
 
    /* Start nuking elements from the window. */
    for (x = start; x <= finish; x++)
    {
       freeLine (swindow, x);
+   }
 
-      if (x < swindow->listSize - 1)
-      {
-	 swindow->list[x] = copyChtype (swindow->list[x + 1]);
-	 swindow->listPos[x] = swindow->listPos[x + 1];
-	 swindow->listLen[x] = swindow->listLen[x + 1];
-      }
+   /* Move the lines after the trimmed lines up. */
+   for (x = start; x < swindow->listSize - lines; x++)
+   {
+      /* Move the line up. */
+      swindow->list[x] = swindow->list[x + lines];
+      swindow->listPos[x] = swindow->listPos[x + lines];
+      swindow->listLen[x] = swindow->listLen[x + lines];
+
+      /* Zero out the moved line's original entries. */
+      swindow->list[x + lines] = 0;
+      swindow->listPos[x + lines] = 0;
+      swindow->listLen[x + lines] = 0;
    }
 
    /* Adjust the item count correctly. */
-   swindow->listSize = swindow->listSize - (end - begin) - 1;
+   swindow->listSize = swindow->listSize - lines;
 
-   /* Redraw the window. */
-   drawCDKSwindow (swindow, ObjOf (swindow)->box);
+   /* Set the maximum top line. */
+   if (swindow->listSize <= swindow->viewSize)
+   {
+      swindow->maxTopLine = 0;
+   }
+   else
+   {
+      swindow->maxTopLine = (swindow->listSize - swindow->viewSize);
+   }
+
+   /* Set the current top line, but only if it is no longer valid. */
+   if (swindow->currentTop > swindow->maxTopLine)
+   {
+      swindow->currentTop = swindow->maxTopLine;
+   }
+
+   /* Redraw the list. */
+   drawCDKSwindowList (swindow, ObjOf (swindow)->box);
 }
 
 /*
@@ -453,14 +483,13 @@ void activateCDKSwindow (CDKSWINDOW *swindow, chtype *actions)
    {
       chtype input;
       boolean functionKey;
-      int ret;
 
       for (;;)
       {
 	 input = (chtype)getchCDKObject (ObjOf (swindow), &functionKey);
 
 	 /* Inject the character into the widget. */
-	 ret = injectCDKSwindow (swindow, input);
+	 (void)injectCDKSwindow (swindow, input);
 	 if (swindow->exitType != vEARLY_EXIT)
 	 {
 	    return;
@@ -471,12 +500,11 @@ void activateCDKSwindow (CDKSWINDOW *swindow, chtype *actions)
    {
       int length = chlen (actions);
       int x = 0;
-      int ret;
 
       /* Inject each character one at a time. */
       for (x = 0; x < length; x++)
       {
-	 ret = injectCDKSwindow (swindow, actions[x]);
+	 (void)injectCDKSwindow (swindow, actions[x]);
 	 if (swindow->exitType != vEARLY_EXIT)
 	 {
 	    return;
@@ -786,6 +814,9 @@ static void drawCDKSwindowList (CDKSWINDOW *swindow, boolean Box GCC_UNUSED)
    /* Start drawing in each line. */
    for (x = 0; x < lastLine; x++)
    {
+      if ((x + swindow->currentTop) >= swindow->listSize)
+	 break;
+
       screenPos = swindow->listPos[x + swindow->currentTop] - swindow->leftChar;
 
       /* Write in the correct line. */
@@ -880,7 +911,7 @@ static void _eraseCDKSwindow (CDKOBJS *object)
 /*
  * This exec's a command and redirects the output to the scrolling window.
  */
-int execCDKSwindow (CDKSWINDOW *swindow, char *command, int insertPos)
+int execCDKSwindow (CDKSWINDOW *swindow, const char *command, int insertPos)
 {
    FILE *ps;
    char temp[BUFSIZ];
@@ -907,7 +938,10 @@ int execCDKSwindow (CDKSWINDOW *swindow, char *command, int insertPos)
    return count;
 }
 
-static void showMessage2 (CDKSWINDOW *swindow, char *msg, char *msg2, char *filename)
+static void showMessage2 (CDKSWINDOW *swindow,
+			  const char *msg,
+			  const char *msg2,
+			  const char *filename)
 {
    char *mesg[10];
    char *temp = (char *)malloc (80 + strlen (filename));
@@ -919,7 +953,7 @@ static void showMessage2 (CDKSWINDOW *swindow, char *msg, char *msg2, char *file
    mesg[n++] = copyChar (temp);
    mesg[n++] = copyChar (" ");
    mesg[n++] = copyChar ("<C>Press any key to continue.");
-   popupLabel (ScreenOf (swindow), mesg, n);
+   popupLabel (ScreenOf (swindow), (CDK_CSTRING2) mesg, n);
    freeCharList (mesg, (unsigned)n);
    free (temp);
 }
@@ -932,7 +966,8 @@ void saveCDKSwindowInformation (CDKSWINDOW *swindow)
 {
    CDKENTRY *entry = 0;
    char *filename = 0;
-   char temp[256], *mesg[10];
+   char temp[256];
+   const char *mesg[10];
    int linesSaved;
 
    /* Create the entry field to get the filename. */
@@ -954,7 +989,7 @@ void saveCDKSwindowInformation (CDKSWINDOW *swindow)
       mesg[1] = "<C>Escape hit. Scrolling window information not saved.";
       mesg[2] = " ";
       mesg[3] = "<C>Press any key to continue.";
-      popupLabel (ScreenOf (swindow), mesg, 4);
+      popupLabel (ScreenOf (swindow), (CDK_CSTRING2) mesg, 4);
 
       /* Clean up and exit. */
       destroyCDKEntry (entry);
@@ -999,7 +1034,9 @@ void loadCDKSwindowInformation (CDKSWINDOW *swindow)
    CDKFSELECT *fselect  = 0;
    CDKDIALOG *dialog    = 0;
    char *filename       = 0;
-   char *mesg[15], *button[5], **fileInfo = 0;
+   const char *mesg[15];
+   const char *button[5];
+   char **fileInfo      = 0;
    int lines, answer;
 
    /* Create the file selector to choose the file. */
@@ -1012,7 +1049,7 @@ void loadCDKSwindowInformation (CDKSWINDOW *swindow)
 			    TRUE, FALSE);
 
    /* Get the filename to load. */
-   filename = activateCDKFselect (fselect, 0);
+   (void)activateCDKFselect (fselect, 0);
 
    /* Make sure they selected a file. */
    if (fselect->exitType == vESCAPE_HIT)
@@ -1021,7 +1058,7 @@ void loadCDKSwindowInformation (CDKSWINDOW *swindow)
       mesg[0] = "<C></B/5>Load Canceled.";
       mesg[1] = " ";
       mesg[2] = "<C>Press any key to continue.";
-      popupLabel (ScreenOf (swindow), mesg, 3);
+      popupLabel (ScreenOf (swindow), (CDK_CSTRING2) mesg, 3);
 
       /* Clean up and exit. */
       destroyCDKFselect (fselect);
@@ -1047,7 +1084,8 @@ void loadCDKSwindowInformation (CDKSWINDOW *swindow)
 
       /* Create the dialog widget. */
       dialog = newCDKDialog (ScreenOf (swindow), CENTER, CENTER,
-			     mesg, 3, button, 2,
+			     (CDK_CSTRING2) mesg, 3,
+			     (CDK_CSTRING2) button, 2,
 			     COLOR_PAIR (2) | A_REVERSE,
 			     TRUE, TRUE, FALSE);
 
@@ -1080,7 +1118,7 @@ void loadCDKSwindowInformation (CDKSWINDOW *swindow)
    cleanCDKSwindow (swindow);
 
    /* Set the new information in the scrolling window. */
-   setCDKSwindow (swindow, fileInfo, lines, ObjOf (swindow)->box);
+   setCDKSwindow (swindow, (CDK_CSTRING2) fileInfo, lines, ObjOf (swindow)->box);
 
    /* Clean up. */
    CDKfreeStrings (fileInfo);
@@ -1091,7 +1129,7 @@ void loadCDKSwindowInformation (CDKSWINDOW *swindow)
  * This actually dumps the information from the scrolling window to a
  * file.
  */
-int dumpCDKSwindow (CDKSWINDOW *swindow, char *filename)
+int dumpCDKSwindow (CDKSWINDOW *swindow, const char *filename)
 {
    /* *INDENT-EQLS* */
    FILE *outputFile     = 0;
@@ -1149,7 +1187,7 @@ static int createList (CDKSWINDOW *swindow, int listSize)
 	 destroyInfo (swindow);
 
 	 /* *INDENT-EQLS* */
-	 swindow->list   = newList;
+	 swindow->list  = newList;
 	 swindow->listPos = newPos;
 	 swindow->listLen = newLen;
       }
@@ -1163,7 +1201,7 @@ static int createList (CDKSWINDOW *swindow, int listSize)
    else
    {
       destroyInfo (swindow);
-      status          = 1;
+      status         = 1;
    }
    return status;
 }
