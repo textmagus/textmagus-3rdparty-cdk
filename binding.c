@@ -1,4 +1,6 @@
 #include <cdk_int.h>
+#include "termkey.h"
+extern TermKey *ta_tk;
 
 /*
  * $Author: tom $
@@ -167,7 +169,50 @@ int getcCDKObject (CDKOBJS *obj)
 {
    EObjectType cdktype = ObjTypeOf (obj);
    CDKOBJS *test = bindableObject (&cdktype, obj);
-   int result = wgetch (InputWindowOf (obj));
+   int result = ERR;
+   TermKeyKey key;
+   int keysyms[] = {0,KEY_BACKSPACE,KEY_TAB,KEY_ENTER,KEY_ESC,0,0,KEY_UP,KEY_DOWN,KEY_LEFT,KEY_RIGHT,0,0,KEY_IC,KEY_DC,0,KEY_PPAGE,KEY_NPAGE,KEY_HOME,KEY_END};
+   TermKeyResult res;
+retry:
+   res = termkey_waitkey(ta_tk, &key);
+   switch (res)
+   {
+   case TERMKEY_RES_KEY:
+      switch (key.type)
+      {
+      case TERMKEY_TYPE_UNICODE:
+         result = key.code.codepoint;
+         if ((key.modifiers & TERMKEY_KEYMOD_CTRL) &&
+             ((result >= 'a' && result <= 'z') || (result >= 'A' && result <= 'Z')))
+         {
+            result = (result & ~0x60);
+            key.modifiers &= ~TERMKEY_KEYMOD_CTRL;
+         }
+         break;
+      case TERMKEY_TYPE_FUNCTION:
+         result = KEY_F(key.code.number);
+         break;
+      case TERMKEY_TYPE_KEYSYM:
+         result = keysyms[key.code.sym];
+         if (key.code.sym == TERMKEY_SYM_TAB && key.modifiers & TERMKEY_KEYMOD_SHIFT)
+            result = KEY_BTAB;
+         break;
+      case TERMKEY_TYPE_UNKNOWN_CSI:
+      case TERMKEY_TYPE_MOUSE:
+         goto retry;
+      default:
+         result = ERR;
+      }
+      break;
+   case TERMKEY_RES_EOF:
+   case TERMKEY_RES_ERROR:
+      result = ERR;
+      break;
+   case TERMKEY_RES_NONE:
+   case TERMKEY_RES_AGAIN:
+      result = 0;
+      break;
+   }
 
    if (result >= 0
        && test != 0

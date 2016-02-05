@@ -449,6 +449,8 @@ void drawCDKItemlistField (CDKITEMLIST *itemlist, boolean highlight)
    int currentItem = itemlist->currentItem;
    int len;
    int x;
+   char *s, *p;
+   int charlen;
 
    /* Determine how much we have to draw. */
    len = MINIMUM (itemlist->itemLen[currentItem], itemlist->fieldWidth);
@@ -456,19 +458,25 @@ void drawCDKItemlistField (CDKITEMLIST *itemlist, boolean highlight)
    /* Erase the field window. */
    werase (itemlist->fieldWin);
 
+   s = chtype2Char (itemlist->item[currentItem]), p = s;
    /* Draw in the current item in the field. */
-   for (x = 0; x < len; x++)
+   for (x = 0; x < len; x++, p+=charlen)
    {
-      chtype c = itemlist->item[currentItem][x];
+      charlen = utf8charlen(*p);
 
       if (highlight)
       {
-	 c = CharOf (c) | A_REVERSE;
+	 wattron(itemlist->fieldWin, A_REVERSE);
       }
 
-      (void)mvwaddch (itemlist->fieldWin, 0,
+      (void)mvwaddnstr (itemlist->fieldWin, 0,
 		      x + itemlist->itemPos[currentItem],
-		      c);
+		      (const char *)p, charlen);
+
+      if (highlight)
+      {
+	 wattroff(itemlist->fieldWin, A_REVERSE);
+      }
    }
 
    /* Redraw the field window. */

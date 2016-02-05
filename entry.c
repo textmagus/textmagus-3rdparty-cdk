@@ -223,13 +223,13 @@ static void setPositionToEnd (CDKENTRY *entry)
    int stringLen;
    int charCount;
 
-   stringLen = (int)strlen (entry->info);
+   stringLen = (int)utf8strlen (entry->info);
    if (stringLen >= entry->fieldWidth)
    {
       if (stringLen < entry->max)
       {
 	 charCount = entry->fieldWidth - 1;
-	 entry->leftChar = stringLen - charCount;
+	 entry->leftChar = stringLen - charCount; // horizontal scrolling with UTF8 does not work
 	 entry->screenCol = charCount;
       }
       else
@@ -244,6 +244,8 @@ static void setPositionToEnd (CDKENTRY *entry)
       entry->screenCol = stringLen;
    }
 }
+
+static inline int isUtf8CharPart(unsigned int ch) { return (ch >= 0x80) && (ch < 0xc0); }
 
 /*
  * This injects a single character into the widget.
@@ -284,7 +286,7 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
       else
       {
 	 int infoLength = (int)strlen (widget->info);
-	 int currPos = widget->screenCol + widget->leftChar;
+	 int currPos = utf8charpos (widget->info, widget->screenCol) + widget->leftChar;
 
 	 switch (input)
 	 {
@@ -332,6 +334,7 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 	    else
 	    {
 	       wmove (widget->fieldWin, 0, --widget->screenCol);
+	       drawCDKEntryField (widget);
 	    }
 	    break;
 
@@ -350,6 +353,7 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 	    {
 	       /* Move right. */
 	       wmove (widget->fieldWin, 0, ++widget->screenCol);
+	       drawCDKEntryField (widget);
 	    }
 	    break;
 
@@ -364,20 +368,25 @@ static int _injectCDKEntry (CDKOBJS *object, chtype input)
 	       bool success = FALSE;
 
 	       if (input == KEY_BACKSPACE)
+	       {
+		  while (currPos >= 1 && isUtf8CharPart(CharOf(widget->info[currPos - 1]))) currPos--;
 		  --currPos;
+	       }
 
 	       if (currPos >= 0 && infoLength > 0)
 	       {
 		  if (currPos < infoLength)
 		  {
+		     int len = utf8charlen(widget->info[currPos]);
 		     for (x = currPos; x < infoLength; x++)
 		     {
-			widget->info[x] = widget->info[x + 1];
+			widget->info[x] = widget->info[x + len];
 		     }
 		     success = TRUE;
 		  }
 		  else if (input == KEY_BACKSPACE)
 		  {
+		     while (infoLength >= 1 && isUtf8CharPart(CharOf(widget->info[infoLength - 1]))) infoLength--;
 		     widget->info[infoLength - 1] = '\0';
 		     success = TRUE;
 		  }
@@ -551,6 +560,23 @@ static void _moveCDKEntry (CDKOBJS *object,
    }
 }
 
+static void toutf8(int code, char *s, int *len) {
+  int b;
+  if (code < 0x80) *len = 1;
+  else if (code < 0x800) *len = 2;
+  else if (code < 0x10000) *len = 3;
+  else if (code < 0x200000) *len = 4;
+  else if (code < 0x4000000) *len = 5;
+  else *len = 6;
+  for (b = *len - 1; b > 0; b--) s[b] = 0x80 | (code & 0x3F), code >>= 6;
+  if (*len == 1) s[0] = code & 0x7F;
+  else if (*len == 2) s[0] = 0xC0 | (code & 0x1F);
+  else if (*len == 3) s[0] = 0xE0 | (code & 0x0F);
+  else if (*len == 4) s[0] = 0xF0 | (code & 0x07);
+  else if (*len == 5) s[0] = 0xF8 | (code & 0x03);
+  else if (*len == 6) s[0] = 0xFC | (code & 0x01);
+}
+
 /*
  * This is a generic character parser for the entry field. It is used as a
  * callback function, so any personal modifications can be made by creating
@@ -558,38 +584,42 @@ static void _moveCDKEntry (CDKOBJS *object,
  */
 static void CDKEntryCallBack (CDKENTRY *entry, chtype character)
 {
-   int plainchar = filterByDisplayType (entry->dispType, character);
+   int plainchar = character;
    size_t temp;
+   char utf8[6];
+   int len;
 
    if (plainchar == ERR ||
-       ((int)strlen (entry->info) >= entry->max))
+       ((int)utf8strlen (entry->info) >= entry->max))
    {
       Beep ();
    }
    else
    {
+      toutf8(plainchar, utf8, &len);
       /* Update the screen and pointer. */
       if (entry->screenCol != entry->fieldWidth - 1)
       {
 	 int x;
+	 int pos = utf8charpos (entry->info, entry->screenCol) + entry->leftChar;
 
-	 for (x = (int)strlen (entry->info);
-	      x > (entry->screenCol + entry->leftChar);
+	 for (x = (int)strlen (entry->info) + len - 1;
+	      x > pos + len - 1;
 	      x--)
 	 {
-	    entry->info[x] = entry->info[x - 1];
+	    entry->info[x] = entry->info[x - len];
 	 }
-	 entry->info[entry->screenCol + entry->leftChar] = (char)plainchar;
+	 strncpy(entry->info + pos, utf8, len);
 	 entry->screenCol++;
       }
       else
       {
 	 /* Update the character pointer. */
 	 temp = strlen (entry->info);
-	 entry->info[temp] = (char)plainchar;
-	 entry->info[temp + 1] = '\0';
+	 strncpy(entry->info + temp, utf8, len);
+	 entry->info[temp + len] = '\0';
 	 /* Do not update the pointer if it's the last character */
-	 if ((int)(temp + 1) < entry->max)
+	 if ((int)(temp + len + 1) < entry->max)
 	    entry->leftChar++;
       }
 
@@ -660,6 +690,8 @@ static void drawCDKEntryField (CDKENTRY *entry)
 {
    int infoLength = 0;
    int x = 0;
+   char *p;
+   int charlen;
 
    /* Draw in the filler characters. */
    (void)mvwhline (entry->fieldWin, 0, x, entry->filler, entry->fieldWidth);
@@ -667,7 +699,7 @@ static void drawCDKEntryField (CDKENTRY *entry)
    /* If there is information in the field. Then draw it in. */
    if (entry->info != 0)
    {
-      infoLength = (int)strlen (entry->info);
+      infoLength = (int)utf8strlen (entry->info);
 
       /* Redraw the field. */
       if (isHiddenDisplayType (entry->dispType))
@@ -679,10 +711,12 @@ static void drawCDKEntryField (CDKENTRY *entry)
       }
       else
       {
-	 for (x = entry->leftChar; x < infoLength; x++)
+	 p = entry->info + entry->leftChar;
+	 for (x = entry->leftChar; x < infoLength; x++, p+=charlen)
 	 {
-	    (void)mvwaddch (entry->fieldWin, 0, x - entry->leftChar,
-			    CharOf (entry->info[x]) | entry->fieldAttr);
+	    charlen = utf8charlen(CharOf (*p));
+	    (void)mvwaddnstr (entry->fieldWin, 0, x - entry->leftChar,
+			    (const char *)p, charlen);
 	 }
       }
       wmove (entry->fieldWin, 0, entry->screenCol);

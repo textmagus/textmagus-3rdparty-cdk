@@ -53,6 +53,10 @@ extern "C" {
  * SUCH DAMAGE.
  */
 
+#if _WIN32
+#define Beep CDKBeep
+#endif
+
 /*
  * This beeps at the user. The standard curses beep() does not
  * flush the stream, so it will only beep until a force is made.
@@ -279,6 +283,14 @@ void cleanChtype (
 		chtype *	/* string */,
 		int		/* length */,
 		chtype		/* character */);
+
+#define HAVE_CDKUTF8 1
+/* This takes the first byte of a UTF-8 character and returns the length of that character. */
+unsigned int utf8charlen(unsigned char /* char */);
+/* This returns the length of the UTF-8 string. */
+size_t utf8strlen(const char * /* string */);
+/** This returns the absolute position in a UTF-8 string of a character position. */
+int utf8charpos(char * /* string */, int /* pos */);
 
 /*
  * This takes a chtype pointer and returns a char pointer.

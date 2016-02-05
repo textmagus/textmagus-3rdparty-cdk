@@ -338,23 +338,34 @@ void writeChtypeAttrib (WINDOW *window,
    int diff             = end - start;
    int display          = 0;
    int x                = 0;
+   char *s, *p;
+   attr_t current_attr;
+   short pair;
+   int charlen;
 
+   s = chtype2Char (string), p = s + start;
+   wattr_get (window, &current_attr, &pair, NULL); // save original attrs
+   wattr_set (window, (string[x] & ~A_CHARTEXT) | attr, pair, NULL); // set new attrs
    if (align == HORIZONTAL)
    {
       /* Draw the message on a horizontal axis. */
       display = MINIMUM (diff, getmaxx (window) - xpos);
-      for (x = 0; x < display; x++)
+      for (x = 0; x < display; x++, p+=charlen)
       {
-	 (void)mvwaddch (window, ypos, xpos + x, string[x + start] | attr);
+         charlen = utf8charlen(*p);
+	 (void)mvwaddnstr (window, ypos, xpos + x, (const char *)p, charlen);
       }
    }
    else
    {
       /* Draw the message on a vertical axis. */
       display = MINIMUM (diff, getmaxy (window) - ypos);
-      for (x = 0; x < display; x++)
+      for (x = 0; x < display; x++, p+=charlen)
       {
-	 (void)mvwaddch (window, ypos + x, xpos, string[x + start] | attr);
+         charlen = utf8charlen(*p);
+	 (void)mvwaddnstr (window, ypos + x, xpos, (const char *)p, charlen);
       }
    }
+   wattr_set (window, current_attr, pair, NULL); // restore original attrs
+   freeChar (s);
 }

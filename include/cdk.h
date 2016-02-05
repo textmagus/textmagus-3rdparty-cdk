@@ -226,6 +226,10 @@ typedef enum {vFRONT, vBACK, vBOTH} EStripType;
  */
 typedef enum {vEARLY_EXIT, vESCAPE_HIT, vNORMAL, vNEVER_ACTIVATED, vERROR} EExitType;
 
+#if _WIN32
+#define boolean CDKboolean
+#endif
+
 /*
  * This defines a boolean type.
  */
@@ -300,7 +304,7 @@ void stopCDKDebug (FILE *fd);
 #include <itemlist.h>
 #include <label.h>
 #include <marquee.h>
-#include <matrix.h>
+//#include <matrix.h>
 #include <mentry.h>
 #include <menu.h>
 #include <radio.h>
@@ -308,21 +312,21 @@ void stopCDKDebug (FILE *fd);
 #include <selection.h>
 #include <swindow.h>
 #include <template.h>
-#include <viewer.h>
+//#include <viewer.h>
 #include <traverse.h>
 #include <button.h>
 
 /*
  * Generated headers:
  */
-#include <dscale.h>
-#include <fscale.h>
-#include <scale.h>
-#include <uscale.h>
-
-#include <fslider.h>
-#include <slider.h>
-#include <uslider.h>
+//#include <dscale.h>
+//#include <fscale.h>
+//#include <scale.h>
+//#include <uscale.h>
+//
+//#include <fslider.h>
+//#include <slider.h>
+//#include <uslider.h>
 
 /*
  * Low-level object drawing

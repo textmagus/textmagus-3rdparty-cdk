@@ -453,6 +453,33 @@ static unsigned decodeAttribute (char *string,
    return (from + (unsigned)(result - base));
 }
 
+unsigned int utf8charlen(unsigned char ch)
+{
+	if (ch < 0x80) {
+		return 1;
+	} else if (ch < 0x80 + 0x40 + 0x20) {
+		return 2;
+	} else if (ch < 0x80 + 0x40 + 0x20 + 0x10) {
+		return 3;
+	} else {
+		return 4;
+	}
+}
+
+size_t utf8strlen(const char *s)
+{
+	size_t i, len = strlen(s), utf8len = 0;
+	for (i = 0; i < len; i+=utf8charlen(CharOf(s[i]))) utf8len++;
+	return utf8len;
+}
+
+int utf8charpos(char *s, int pos)
+{
+	int i, len = (int)strlen(s), utf8len = 0;
+	for (i = 0; i < len; i+=utf8charlen(CharOf(s[i]))) if (utf8len++ >= pos) break;
+	return i;
+}
+
 /*
  * This function takes a character string, full of format markers
  * and translates them into a chtype * array. This is better suited
@@ -472,6 +499,7 @@ chtype *char2Chtype (const char *string, int *to, int *align)
    int start;
    int used;
    int x;
+   char *s;
 
    (*to) = 0;
    *align = LEFT;
@@ -763,7 +791,7 @@ chtype *char2Chtype (const char *string, int *to, int *align)
 	    result[0] = attrib;
 	 }
       }
-      *to = used;
+      for (from = 0; from < used; from+=utf8charlen(CharOf(result[from]))) (*to)++;
    }
    else
    {
@@ -1334,7 +1362,7 @@ char *baseName (char *pathname)
 	 for (x = pathLen - 1; x != 0; --x)
 	 {
 	    /* Find the last '/' in the pathname. */
-	    if (pathname[x] == '/')
+	    if (pathname[x] == '/' || pathname[x] == '\\')
 	    {
 	       strcpy (base, pathname + x + 1);
 	       break;
@@ -1361,7 +1389,7 @@ char *dirName (char *pathname)
        && (pathLen = strlen (pathname)) != 0)
    {
       x = pathLen;
-      while ((dir[x] != '/') && (x > 0))
+      while ((dir[x] != '/' && dir[x] != '\\') && (x > 0))
       {
 	 dir[x--] = '\0';
       }

@@ -1108,7 +1108,7 @@ static int displayFileInfoCB (EObjectType objectType GCC_UNUSED,
 
 static char *make_pathname (const char *directory, const char *filename)
 {
-   size_t need = strlen (filename) + 2;
+   size_t need = strlen (filename) + 3;
    bool root = (strcmp (directory, "/") == 0);
    char *result;
 
@@ -1325,6 +1325,7 @@ static int completeFilenameCB (EObjectType objectType GCC_UNUSED,
  */
 void deleteFileCB (EObjectType objectType GCC_UNUSED, void *object, void *clientData)
 {
+#if 0
    CDKSCROLL *fscroll = (CDKSCROLL *)object;
    CDKFSELECT *fselect = (CDKFSELECT *)clientData;
    const char *buttons[] =
@@ -1383,6 +1384,7 @@ void deleteFileCB (EObjectType objectType GCC_UNUSED, void *object, void *client
 
    /* Redraw the file selector. */
    drawCDKFselect (fselect, ObjOf (fselect)->box);
+#endif
 }
 
 /*

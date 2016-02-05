@@ -180,17 +180,6 @@ CDKSCREEN *initCDKScreen (WINDOW *window)
    ALL_SCREENS *item;
    CDKSCREEN *screen = 0;
 
-   /* initialization, for the first time */
-   if (all_screens == 0)
-   {
-      /* Set up basic curses settings. */
-#ifdef HAVE_SETLOCALE
-      setlocale (LC_ALL, "");
-#endif
-      noecho ();
-      cbreak ();
-   }
-
    if ((item = typeMalloc (ALL_SCREENS)) != 0)
    {
       if ((screen = typeCalloc (CDKSCREEN)) != 0)
