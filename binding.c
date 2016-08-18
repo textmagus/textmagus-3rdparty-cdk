@@ -1,6 +1,6 @@
 #include <cdk_int.h>
 #include "termkey.h"
-extern TermKey *ta_tk;
+TermKey *ta_tk = NULL;
 
 /*
  * $Author: tom $
